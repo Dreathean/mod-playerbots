@@ -220,7 +220,7 @@ class PlayerbotAIConfig
         bool allowSummonInCombat;
         bool allowSummonWhenMasterIsDead;
         bool allowSummonWhenBotIsDead;
-        int reviveBotWhenSummoned;
+        bool reviveBotWhenSummoned;
         bool botRepairWhenSummon;
         bool autoInitOnly;
         float autoInitEquipLevelLimitRatio;

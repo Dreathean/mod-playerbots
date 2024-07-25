@@ -206,8 +206,7 @@ bool SummonAction::Teleport(Player* summoner, Player* player)
                     return false;
                 }
 
-                bool revive = sPlayerbotAIConfig->reviveBotWhenSummoned == 2 || (sPlayerbotAIConfig->reviveBotWhenSummoned == 1 && !master->IsInCombat());
-                if (bot->isDead() && revive)
+                if (bot->isDead() && sPlayerbotAIConfig->reviveBotWhenSummoned)
                 {
                     bot->ResurrectPlayer(1.0f, false);
                     botAI->TellMasterNoFacing("I live, again!");
