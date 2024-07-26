@@ -590,6 +590,9 @@ INSERT INTO `ai_playerbot_texts` (`id`, `name`, `text`, `say_type`, `reply_type`
 	(533, 'error_gbank_found', 'Can not find a guild bank nearby', 0, 0, '', 'Il n\'y a pas de coffre de guilde à proximité', '', '', '', '', '', 'Не могу найти гильд банк рядом'),
 	(534, 'error_cant_put', 'I can\'t put ', 0, 0, '', '', '', '', '', '', '', 'Я не могу положить'),
 	(535, 'error_gbank_rights', 'I have no rights to put items in the first guild bank tab', 0, 0, '', 'Je n\'ai pas les droits de dépôt à la banque', '', '', '', '', '', 'Нет прав чтобы класть вещи в первую вкладку гильд банка'),
+<<<<<<< HEAD
+>>>>>>> parent of 8507c26 (Revert "Merge pull request #381 from noisiver/fix-translation-commit")
+=======
 >>>>>>> parent of 8507c26 (Revert "Merge pull request #381 from noisiver/fix-translation-commit")
 	(536, 'gbank_put', ' put to guild bank', 0, 0, '', '', '', '', '', '', '', ' теперь в гильд банке');
 /*!40000 ALTER TABLE `ai_playerbot_texts` ENABLE KEYS */;
