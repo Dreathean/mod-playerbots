@@ -36,6 +36,13 @@ public:
     // bool isPossible();
 };
 
+class BladeFuryTrigger : public BoostTrigger
+{
+public:
+    BladeFuryTrigger(PlayerbotAI* botAI) : BoostTrigger(botAI, "blade fury") {}
+};
+
+
 class RuptureTrigger : public DebuffTrigger
 {
 public:
@@ -120,17 +127,6 @@ public:
     TricksOfTheTradeOnMainTankTrigger(PlayerbotAI* ai) : BuffOnMainTankTrigger(ai, "tricks of the trade", true) {}
 };
 
-class TargetWithComboPointsLowerHealTrigger : public ComboPointsAvailableTrigger
-{
-public:
-    TargetWithComboPointsLowerHealTrigger(PlayerbotAI* ai, int32 combo_point = 5, float lifeTime = 8.0f)
-        : ComboPointsAvailableTrigger(ai, combo_point), lifeTime(lifeTime)
-    {
-    }
-    bool IsActive() override;
 
-private:
-    float lifeTime;
-};
 
 #endif

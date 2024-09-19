@@ -17,8 +17,8 @@ void GenericPaladinStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
 {
     CombatStrategy::InitTriggers(triggers);
 
-    // triggers.push_back(new TriggerNode("low health", NextAction::array(0, new NextAction("divine shield",
-    // ACTION_CRITICAL_HEAL + 2), new NextAction("holy light", ACTION_CRITICAL_HEAL + 2), nullptr)));
+    triggers.push_back(new TriggerNode("critical health", NextAction::array(0, new NextAction("divine shield",
+        ACTION_HIGH + 5), nullptr)));
     triggers.push_back(
         new TriggerNode("hammer of justice interrupt",
                         NextAction::array(0, new NextAction("hammer of justice", ACTION_INTERRUPT), nullptr)));
@@ -37,7 +37,7 @@ void GenericPaladinStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
         "protect party member",
         NextAction::array(0, new NextAction("blessing of protection on party", ACTION_EMERGENCY + 2), nullptr)));
     triggers.push_back(
-        new TriggerNode("medium mana", NextAction::array(0, new NextAction("divine plea", ACTION_HIGH), NULL)));
+        new TriggerNode("high mana", NextAction::array(0, new NextAction("divine plea", ACTION_HIGH), NULL)));
 }
 
 void PaladinCureStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
@@ -61,8 +61,7 @@ void PaladinCureStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
 
 void PaladinBoostStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
 {
-    triggers.push_back(new TriggerNode(
-        "avenging wrath", NextAction::array(0, new NextAction("avenging wrath", ACTION_HIGH + 2), nullptr)));
+    
     // triggers.push_back(new TriggerNode("divine favor", NextAction::array(0, new NextAction("divine favor",
     // ACTION_HIGH + 1), nullptr)));
 }

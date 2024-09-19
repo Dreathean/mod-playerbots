@@ -32,8 +32,11 @@ public:
 BEGIN_RANGED_SPELL_ACTION(CastArcaneShotAction, "arcane shot")
 END_SPELL_ACTION()
 
-BEGIN_RANGED_SPELL_ACTION(CastExplosiveShotAction, "explosive shot")
-END_SPELL_ACTION()
+class CastExplosiveShotAction : public CastDebuffSpellAction
+{
+public:
+    CastExplosiveShotAction(PlayerbotAI* botAI) : CastDebuffSpellAction(botAI, "explosive shot", true, 0.0f) {}
+};
 
 BEGIN_RANGED_SPELL_ACTION(CastAimedShotAction, "aimed shot")
 END_SPELL_ACTION()
@@ -73,6 +76,9 @@ BEGIN_RANGED_SPELL_ACTION(CastSteadyShotAction, "steady shot")
 END_SPELL_ACTION()
 
 BEGIN_RANGED_SPELL_ACTION(CastKillShotAction, "kill shot")
+END_SPELL_ACTION()
+
+BEGIN_RANGED_SPELL_ACTION(CastSilencingShotAction, "silencing shot")
 END_SPELL_ACTION()
 
 BEGIN_RANGED_SPELL_ACTION(CastTranquilizingShotAction, "tranquilizing shot")
@@ -136,6 +142,14 @@ public:
     std::string const GetTargetName() override { return "pet target"; }
 };
 
+class CastKillCommandAction : public CastAuraSpellAction
+{
+public:
+    CastKillCommandAction(PlayerbotAI* botAI) : CastAuraSpellAction(botAI, "kill command") {}
+
+    std::string const GetTargetName() override { return "pet target"; }
+};
+
 class CastRevivePetAction : public CastBuffSpellAction
 {
 public:
@@ -158,6 +172,12 @@ class CastRapidFireAction : public CastBuffSpellAction
 {
 public:
     CastRapidFireAction(PlayerbotAI* botAI) : CastBuffSpellAction(botAI, "rapid fire") {}
+};
+
+class CastDeterrenceAction : public CastBuffSpellAction
+{
+public:
+    CastDeterrenceAction(PlayerbotAI* botAI) : CastBuffSpellAction(botAI, "deterrence") {}
 };
 
 class CastReadinessAction : public CastBuffSpellAction

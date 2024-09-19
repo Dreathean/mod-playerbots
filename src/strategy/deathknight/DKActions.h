@@ -110,11 +110,11 @@ public:
     CastIcyTouchAction(PlayerbotAI* ai) : CastSpellAction(ai, "icy touch") {}
 };
 
-class CastIcyTouchOnAttackerAction : public CastDebuffSpellOnMeleeAttackerAction
+class CastIcyTouchOnAttackerAction : public CastDebuffSpellOnAttackerAction
 {
 public:
     CastIcyTouchOnAttackerAction(PlayerbotAI* botAI)
-        : CastDebuffSpellOnMeleeAttackerAction(botAI, "icy touch", true, .0f)
+        : CastDebuffSpellOnAttackerAction(botAI, "icy touch", true, .0f)
     {
     }
 };
@@ -165,7 +165,7 @@ public:
 class CastGhoulFrenzyAction : public CastBuffSpellAction
 {
 public:
-    CastGhoulFrenzyAction(PlayerbotAI* botAI) : CastBuffSpellAction(botAI, "ghoul frenzy") {}
+    CastGhoulFrenzyAction(PlayerbotAI* botAI) : CastBuffSpellAction(botAI, "ghoul frenzy", false, 5000) {}
     std::string const GetTargetName() override { return "pet target"; }
 };
 
@@ -232,16 +232,17 @@ public:
     CastDeathCoilAction(PlayerbotAI* botAI) : CastSpellAction(botAI, "death coil") {}
 };
 
-class CastBloodBoilAction : public CastSpellAction
+class CastBloodBoilAction : public CastMeleeSpellAction
 {
 public:
-    CastBloodBoilAction(PlayerbotAI* botAI) : CastSpellAction(botAI, "blood boil") {}
+    CastBloodBoilAction(PlayerbotAI* botAI) : CastMeleeSpellAction(botAI, "blood boil") {}
 };
 
 class CastDeathAndDecayAction : public CastSpellAction
 {
 public:
     CastDeathAndDecayAction(PlayerbotAI* botAI) : CastSpellAction(botAI, "death and decay") {}
+    // ActionThreatType getThreatType() override { return ActionThreatType::Aoe; }
 };
 
 class CastHornOfWinterAction : public CastSpellAction

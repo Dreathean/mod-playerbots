@@ -82,7 +82,7 @@ void TankPaladinStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "light aoe", NextAction::array(0, new NextAction("avenger's shield", ACTION_HIGH + 5), nullptr)));
     triggers.push_back(
-        new TriggerNode("medium aoe", NextAction::array(0, new NextAction("melee consecration", ACTION_HIGH + 7),
+        new TriggerNode("medium aoe", NextAction::array(0, new NextAction("consecration", ACTION_HIGH + 7),
                                                         new NextAction("avenger's shield", ACTION_HIGH + 6), nullptr)));
     // triggers.push_back(new TriggerNode("avenger's shield", NextAction::array(0, new NextAction("avenger's shield",
     // ACTION_HIGH + 7), nullptr)));
@@ -98,6 +98,8 @@ void TankPaladinStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
                                        NextAction::array(0, new NextAction("holy shield", ACTION_HIGH + 4), nullptr)));
     // triggers.push_back(new TriggerNode("blessing", NextAction::array(0, new NextAction("blessing of sanctuary",
     // ACTION_HIGH + 9), nullptr)));
+    triggers.push_back(new TriggerNode(
+        "avenging wrath", NextAction::array(0, new NextAction("avenging wrath", ACTION_HIGH + 2), nullptr)));
     triggers.push_back(
         new TriggerNode("target critical health",
                         NextAction::array(0, new NextAction("hammer of wrath", ACTION_CRITICAL_HEAL), nullptr)));
@@ -107,7 +109,7 @@ void TankPaladinStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
         new TriggerNode("medium group heal occasion",
                         NextAction::array(0, new NextAction("divine sacrifice", ACTION_HIGH + 5), nullptr)));
     triggers.push_back(new TriggerNode(
-        "enough mana", NextAction::array(0, new NextAction("melee consecration", ACTION_HIGH + 4), nullptr)));
+        "enough mana", NextAction::array(0, new NextAction("consecration", ACTION_HIGH + 4), nullptr)));
     triggers.push_back(new TriggerNode("not facing target",
                                        NextAction::array(0, new NextAction("set facing", ACTION_NORMAL + 7), nullptr)));
     triggers.push_back(new TriggerNode(

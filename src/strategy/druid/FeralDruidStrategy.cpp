@@ -27,7 +27,7 @@ private:
     {
         return new ActionNode("survival instincts",
                               /*P*/ nullptr,
-                              /*A*/ NextAction::array(0, new NextAction("barskin"), nullptr),
+                              /*A*/ NextAction::array(0, new NextAction("barkskin"), nullptr),
                               /*C*/ nullptr);
     }
 
@@ -112,4 +112,6 @@ void FeralDruidStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
                                        NextAction::array(0, new NextAction("dash", ACTION_EMERGENCY + 2), nullptr)));
     triggers.push_back(new TriggerNode("enemy flagcarrier near",
                                        NextAction::array(0, new NextAction("dash", ACTION_EMERGENCY + 2), nullptr)));
+    triggers.push_back(
+        new TriggerNode("berserk", NextAction::array(0, new NextAction("berserk", ACTION_HIGH + 6), nullptr)));
 }

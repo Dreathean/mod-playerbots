@@ -9,6 +9,8 @@
 #include "Playerbots.h"
 #include "SpellInfo.h"
 
+#include <regex>
+
 std::map<std::string, uint32> ChatHelper::consumableSubClasses;
 std::map<std::string, uint32> ChatHelper::tradeSubClasses;
 std::map<std::string, uint32> ChatHelper::itemQualities;
@@ -217,6 +219,26 @@ std::string const ChatHelper::formatMoney(uint32 copper)
     }
 
     return out.str();
+}
+
+std::string ChatHelper::parseValue(const std::string& type, const std::string& text)
+{
+    std::string retString;
+
+    std::string pattern = "Hvalue:" + type + ":";
+
+    int pos = text.find(pattern, 0);
+    if (pos == -1)
+        return retString;
+
+    pos += pattern.size();
+
+    int endPos = text.find('|', pos);
+    if (endPos == -1)
+        return retString;
+
+    retString = text.substr(pos, endPos - pos);
+    return retString;
 }
 
 uint32 ChatHelper::parseMoney(std::string const text)
@@ -569,4 +591,43 @@ void ChatHelper::eraseAllSubStr(std::string& mainStr, std::string const toErase)
         // If found then erase it from std::string
         mainStr.erase(pos, toErase.length());
     }
+}
+
+std::set<uint32> extractGeneric(std::string_view text, std::string_view prefix)
+{
+    std::set<uint32_t> ids;
+    std::string_view text_view = text;
+
+    size_t pos = 0;
+    while ((pos = text_view.find(prefix, pos)) != std::string::npos)
+    {
+        // skip "Hquest:/Hitem:"
+        pos += prefix.size();
+
+        // extract everything after "Hquest:/Hitem:"
+        size_t end_pos = text_view.find_first_not_of("0123456789", pos);
+        std::string_view number_str = text_view.substr(pos, end_pos - pos);
+
+        uint32 number = 0;
+        
+        auto [ptr, ec] = std::from_chars(number_str.data(), number_str.data() + number_str.size(), number);
+
+        if (ec == std::errc())
+        {
+            ids.insert(number);
+        }
+        pos = end_pos;
+    }
+
+    return ids;
+}
+
+std::set<uint32> ChatHelper::ExtractAllQuestIds(const std::string& text)
+{
+    return extractGeneric(text, "Hquest:");
+}
+
+std::set<uint32> ChatHelper::ExtractAllItemIds(const std::string& text)
+{
+    return extractGeneric(text, "Hitem:");
 }

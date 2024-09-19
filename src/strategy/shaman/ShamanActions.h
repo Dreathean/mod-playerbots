@@ -7,6 +7,7 @@
 #define _PLAYERBOT_SHAMANACTIONS_H
 
 #include "GenericSpellActions.h"
+#include "Playerbots.h"
 #include "SharedDefines.h"
 
 class PlayerbotAI;
@@ -231,10 +232,11 @@ public:
     bool isUseful() override;
 };
 
-class CastFireNovaAction : public CastSpellAction
+class CastFireNovaAction : public CastMeleeSpellAction
 {
 public:
-    CastFireNovaAction(PlayerbotAI* botAI) : CastSpellAction(botAI, "fire nova") {}
+    CastFireNovaAction(PlayerbotAI* botAI) : CastMeleeSpellAction(botAI, "fire nova") {}
+    bool isUseful() override;
 };
 
 class CastWindShearAction : public CastSpellAction
@@ -423,6 +425,20 @@ public:
     CastFireElementalTotemAction(PlayerbotAI* ai) : CastTotemAction(ai, "fire elemental totem", "", 0.0f) {}
     virtual std::string const GetTargetName() override { return "self target"; }
     virtual bool isUseful() override { return CastTotemAction::isUseful(); }
+};
+
+class CastFireElementalTotemMeleeAction : public CastTotemAction
+{
+public:
+    CastFireElementalTotemMeleeAction(PlayerbotAI* ai) : CastTotemAction(ai, "fire elemental totem", "", 0.0f) {}
+    virtual std::string const GetTargetName() override { return "self target"; }
+    virtual bool isUseful() override
+    {
+        Unit* target = AI_VALUE(Unit*, "current target");
+        if (!target || !bot->IsWithinMeleeRange(target))
+            return false;
+        return CastTotemAction::isUseful();
+    }
 };
 
 class CastWrathOfAirTotemAction : public CastTotemAction

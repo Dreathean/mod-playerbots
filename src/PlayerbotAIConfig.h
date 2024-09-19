@@ -55,16 +55,20 @@ public:
 
     bool enabled;
     bool allowGuildBots, allowPlayerBots;
+    bool randomBotGuildNearby, randomBotInvitePlayer, inviteChat;
     uint32 globalCoolDown, reactDelay, maxWaitForMove, disableMoveSplinePath, maxMovementSearchTime, expireActionTime,
         dispelAuraDuration, passiveDelay, repeatDelay, errorDelay, rpgDelay, sitDelay, returnDelay, lootDelay;
+    bool dynamicReactDelay;
     float sightDistance, spellDistance, reactDistance, grindDistance, lootDistance, shootDistance, fleeDistance,
         tooCloseDistance, meleeDistance, followDistance, whisperDistance, contactDistance, aoeRadius, rpgDistance,
         targetPosRecalcDistance, farDistance, healDistance, aggroDistance;
     uint32 criticalHealth, lowHealth, mediumHealth, almostFullHealth;
-    uint32 lowMana, mediumMana;
+    uint32 lowMana, mediumMana, highMana;
     bool autoSaveMana;
     uint32 saveManaThreshold;
     bool autoAvoidAoe;
+    float maxAoeAvoidRadius;
+    std::set<uint32> aoeAvoidSpellWhitelist;
     bool tellWhenAvoidAoe;
 
     uint32 openGoSpell;
@@ -95,11 +99,78 @@ public:
     uint32 randomBotsPerInterval;
     uint32 minRandomBotsPriceChangeInterval, maxRandomBotsPriceChangeInterval;
     bool randomBotJoinLfg;
+
+    // chat
     bool randomBotTalk;
     bool randomBotEmote;
     bool randomBotSuggestDungeons;
-    bool randomBotGuildTalk;
+    bool enableBroadcasts;
+    bool enableGreet;
+    bool randomBotSayWithoutMaster;
+
+    uint32 broadcastChanceMaxValue;
+
+    uint32 broadcastToGuildGlobalChance;
+    uint32 broadcastToWorldGlobalChance;
+    uint32 broadcastToGeneralGlobalChance;
+    uint32 broadcastToTradeGlobalChance;
+    uint32 broadcastToLFGGlobalChance;
+    uint32 broadcastToLocalDefenseGlobalChance;
+    uint32 broadcastToWorldDefenseGlobalChance;
+    uint32 broadcastToGuildRecruitmentGlobalChance;
+
+    uint32 broadcastChanceLootingItemPoor;
+    uint32 broadcastChanceLootingItemNormal;
+    uint32 broadcastChanceLootingItemUncommon;
+    uint32 broadcastChanceLootingItemRare;
+    uint32 broadcastChanceLootingItemEpic;
+    uint32 broadcastChanceLootingItemLegendary;
+    uint32 broadcastChanceLootingItemArtifact;
+
+    uint32 broadcastChanceQuestAccepted;
+    uint32 broadcastChanceQuestUpdateObjectiveCompleted;
+    uint32 broadcastChanceQuestUpdateObjectiveProgress;
+    uint32 broadcastChanceQuestUpdateFailedTimer;
+    uint32 broadcastChanceQuestUpdateComplete;
+    uint32 broadcastChanceQuestTurnedIn;
+
+    uint32 broadcastChanceKillNormal;
+    uint32 broadcastChanceKillElite;
+    uint32 broadcastChanceKillRareelite;
+    uint32 broadcastChanceKillWorldboss;
+    uint32 broadcastChanceKillRare;
+    uint32 broadcastChanceKillUnknown;
+    uint32 broadcastChanceKillPet;
+    uint32 broadcastChanceKillPlayer;
+
+    uint32 broadcastChanceLevelupGeneric;
+    uint32 broadcastChanceLevelupTenX;
+    uint32 broadcastChanceLevelupMaxLevel;
+
+    uint32 broadcastChanceSuggestInstance;
+    uint32 broadcastChanceSuggestQuest;
+    uint32 broadcastChanceSuggestGrindMaterials;
+    uint32 broadcastChanceSuggestGrindReputation;
+    uint32 broadcastChanceSuggestSell;
+    uint32 broadcastChanceSuggestSomething;
+
+    uint32 broadcastChanceSuggestSomethingToxic;
+
+    uint32 broadcastChanceSuggestToxicLinks;
+    std::string toxicLinksPrefix;
+    uint32 toxicLinksRepliesChance;
+
+    uint32 broadcastChanceSuggestThunderfury;
+    uint32 thunderfuryRepliesChance;
+
+    uint32 broadcastChanceGuildManagement;
+
+    uint32 guildRepliesRate;
+
     bool suggestDungeonsInLowerCaseRandomly;
+
+    // --
+
     bool randomBotJoinBG;
     bool randomBotAutoJoinBG;
     uint32 randomBotAutoJoinWarsongBracket;
@@ -115,6 +186,7 @@ public:
     bool summonAtInnkeepersEnabled;
     std::string combatStrategies, nonCombatStrategies;
     std::string randomBotCombatStrategies, randomBotNonCombatStrategies;
+    bool applyInstanceStrategies;
     uint32 randomBotMinLevel, randomBotMaxLevel;
     float randomChangeMultiplier;
 
@@ -125,7 +197,9 @@ public:
     std::string premadeSpecGlyph[MAX_CLASSES][MAX_SPECNO];
     std::vector<uint32> parsedSpecGlyph[MAX_CLASSES][MAX_SPECNO];
     std::string premadeSpecLink[MAX_CLASSES][MAX_SPECNO][MAX_LEVEL];
+    std::string premadeHunterPetLink[3][21];
     std::vector<std::vector<uint32>> parsedSpecLinkOrder[MAX_CLASSES][MAX_SPECNO][MAX_LEVEL];
+    std::vector<std::vector<uint32>> parsedHunterPetLinkOrder[3][21];
     uint32 randomClassSpecProb[MAX_CLASSES][MAX_SPECNO];
     uint32 randomClassSpecIndex[MAX_CLASSES][MAX_SPECNO];
 
@@ -181,8 +255,6 @@ public:
 
     uint32 commandServerPort;
     bool perfMonEnabled;
-
-    bool enableGreet;
     bool summonWhenGroup;
     bool randomBotShowHelmet;
     bool randomBotShowCloak;
@@ -201,6 +273,7 @@ public:
     std::string autoPickReward;
     bool autoEquipUpgradeLoot;
     float equipUpgradeThreshold;
+    bool twoRoundsGearInit;
     bool syncQuestWithPlayer;
     bool syncQuestForPlayer;
     std::string autoTrainSpells;
@@ -212,8 +285,6 @@ public:
     bool freeFood;
     bool autoLearnQuestSpells;
     bool autoTeleportForLevel;
-    bool randomBotSayWithoutMaster;
-    bool sayWhenCollectingItems;
     bool randomBotGroupNearby;
     uint32 tweakValue;  // Debugging config
 
@@ -240,6 +311,7 @@ public:
     float autoInitEquipLevelLimitRatio;
     int32 maxAddedBots, maxAddedBotsPerClass;
     int32 addClassCommand;
+    int32 addClassAccountPoolSize;
     int32 maintenanceCommand;
     int32 autoGearCommand, autoGearQualityLimit, autoGearScoreLimit;
 
@@ -258,6 +330,7 @@ public:
 
     void loadWorldBuf(uint32 factionId, uint32 classId, uint32 minLevel, uint32 maxLevel);
     static std::vector<std::vector<uint32>> ParseTempTalentsOrder(uint32 cls, std::string temp_talents_order);
+    static std::vector<std::vector<uint32>> ParseTempPetTalentsOrder(uint32 spec, std::string temp_talents_order);
 };
 
 #define sPlayerbotAIConfig PlayerbotAIConfig::instance()

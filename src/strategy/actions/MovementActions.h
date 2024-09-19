@@ -9,6 +9,7 @@
 #include <cmath>
 
 #include "Action.h"
+#include "LastMovementValue.h"
 #include "PlayerbotAIConfig.h"
 
 class Player;
@@ -17,19 +18,20 @@ class Unit;
 class WorldObject;
 class Position;
 
+
 class MovementAction : public Action
 {
 public:
     MovementAction(PlayerbotAI* botAI, std::string const name);
 
 protected:
-    void JumpTo(uint32 mapId, float x, float y, float z);
-    bool MoveNear(uint32 mapId, float x, float y, float z, float distance = sPlayerbotAIConfig->contactDistance);
+    bool JumpTo(uint32 mapId, float x, float y, float z, MovementPriority priority = MovementPriority::MOVEMENT_NORMAL);
+    bool MoveNear(uint32 mapId, float x, float y, float z, float distance = sPlayerbotAIConfig->contactDistance, MovementPriority priority = MovementPriority::MOVEMENT_NORMAL);
     bool MoveToLOS(WorldObject* target, bool ranged = false);
     bool MoveTo(uint32 mapId, float x, float y, float z, bool idle = false, bool react = false,
-                bool normal_only = false, bool exact_waypoint = false);
-    bool MoveTo(Unit* target, float distance = 0.0f);
-    bool MoveNear(WorldObject* target, float distance = sPlayerbotAIConfig->contactDistance);
+                bool normal_only = false, bool exact_waypoint = false, MovementPriority priority = MovementPriority::MOVEMENT_NORMAL);
+    bool MoveTo(WorldObject* target, float distance = 0.0f, MovementPriority priority = MovementPriority::MOVEMENT_NORMAL);
+    bool MoveNear(WorldObject* target, float distance = sPlayerbotAIConfig->contactDistance, MovementPriority priority = MovementPriority::MOVEMENT_NORMAL);
     float GetFollowAngle();
     bool Follow(Unit* target, float distance = sPlayerbotAIConfig->followDistance);
     bool Follow(Unit* target, float distance, float angle);
@@ -37,16 +39,19 @@ protected:
     bool ReachCombatTo(Unit* target, float distance = 0.0f);
     float MoveDelay(float distance);
     void WaitForReach(float distance);
-    bool IsMovingAllowed(Unit* target);
+    void SetNextMovementDelay(float delayMillis);
+    bool IsMovingAllowed(WorldObject* target);
     bool IsMovingAllowed(uint32 mapId, float x, float y, float z);
     bool IsDuplicateMove(uint32 mapId, float x, float y, float z);
-    bool IsWaitingForLastMove();
+    bool IsWaitingForLastMove(MovementPriority priority);
     bool IsMovingAllowed();
     bool Flee(Unit* target);
     void ClearIdleState();
     void UpdateMovementState();
-    bool MoveAway(Unit* target);
-    bool MoveInside(uint32 mapId, float x, float y, float z, float distance = sPlayerbotAIConfig->followDistance);
+    bool MoveAway(Unit* target, float distance = sPlayerbotAIConfig -> fleeDistance);
+    bool MoveFromGroup(float distance);
+    bool Move(float angle, float distance);
+    bool MoveInside(uint32 mapId, float x, float y, float z, float distance = sPlayerbotAIConfig->followDistance, MovementPriority priority = MovementPriority::MOVEMENT_NORMAL);
     void CreateWp(Player* wpOwner, float x, float y, float z, float o, uint32 entry, bool important = false);
     Position BestPositionForMeleeToFlee(Position pos, float radius);
     Position BestPositionForRangedToFlee(Position pos, float radius);
@@ -94,7 +99,7 @@ class AvoidAoeAction : public MovementAction
 {
 public:
     AvoidAoeAction(PlayerbotAI* botAI, int moveInterval = 1000)
-        : MovementAction(botAI, "avoid aoe"), moveInterval(moveInterval)
+        : MovementAction(botAI, "aaoe"), moveInterval(moveInterval)
     {
     }
 
@@ -245,5 +250,13 @@ protected:
     uint32 intervals, call_counters;
     bool clockwise;
     std::vector<std::pair<float, float>> waypoints;
+};
+
+class MoveFromGroupAction : public MovementAction
+{
+public:
+    MoveFromGroupAction(PlayerbotAI* botAI, std::string const name = "move from group") : MovementAction(botAI, name) {}
+
+    bool Execute(Event event) override;
 };
 #endif

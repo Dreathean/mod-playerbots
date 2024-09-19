@@ -79,15 +79,13 @@ bool SummonAction::Execute(Event event)
 
     if (Pet* pet = bot->GetPet())
     {
-        pet->SetReactState(REACT_PASSIVE);
-        pet->GetCharmInfo()->SetIsCommandFollow(true);
-        pet->GetCharmInfo()->IsReturning();
+        botAI->PetFollow();
     }
 
     if (master->GetSession()->GetSecurity() >= SEC_PLAYER)
     {
         // botAI->GetAiObjectContext()->GetValue<GuidVector>("prioritized targets")->Set({});
-        SET_AI_VALUE(std::list<FleeInfo>, "recently flee info", {});
+        AI_VALUE(std::list<FleeInfo>&, "recently flee info").clear();
         return Teleport(master, bot);
     }
 
@@ -167,16 +165,16 @@ bool SummonAction::SummonUsingNpcs(Player* summoner, Player* player)
 
 bool SummonAction::Teleport(Player* summoner, Player* player)
 {
-    Player* master = GetMaster();
-    // if (master->GetMap() && master->GetMap()->IsDungeon()) {
-    //     InstanceMap* map = master->GetMap()->ToInstanceMap();
-    //     if (map) {
-    //         if (map->CannotEnter(player, true) == Map::CANNOT_ENTER_MAX_PLAYERS) {
-    //             botAI->TellError("I can not enter this dungeon");
-    //                 return false;
-    //         }
-    //     }
-    // }
+    // Player* master = GetMaster();
+    if (!summoner)
+        return false;
+    
+    if (player->GetVehicle())
+    {
+        botAI->TellError("You cannot summon me while I'm on a vehicle");
+        return false;
+    }
+
     if (!summoner->IsBeingTeleported() && !player->IsBeingTeleported())
     {
         float followAngle = GetFollowAngle();
@@ -193,13 +191,13 @@ bool SummonAction::Teleport(Player* summoner, Player* player)
                         ->botRepairWhenSummon)  // .conf option to repair bot gear when summoned 0 = off, 1 = on
                     bot->DurabilityRepairAll(false, 1.0f, false);
 
-                if (master->IsInCombat() && !sPlayerbotAIConfig->allowSummonInCombat)
+                if (summoner->IsInCombat() && !sPlayerbotAIConfig->allowSummonInCombat)
                 {
                     botAI->TellError("You cannot summon me while you're in combat");
                     return false;
                 }
 
-                if (!master->IsAlive() && !sPlayerbotAIConfig->allowSummonWhenMasterIsDead)
+                if (!summoner->IsAlive() && !sPlayerbotAIConfig->allowSummonWhenMasterIsDead)
                 {
                     botAI->TellError("You cannot summon me while you're dead");
                     return false;
@@ -214,14 +212,17 @@ bool SummonAction::Teleport(Player* summoner, Player* player)
 
                 bool revive =
                     sPlayerbotAIConfig->reviveBotWhenSummoned == 2 ||
-                    (sPlayerbotAIConfig->reviveBotWhenSummoned == 1 && !master->IsInCombat() && master->IsAlive());
+                    (sPlayerbotAIConfig->reviveBotWhenSummoned == 1 && !summoner->IsInCombat() && summoner->IsAlive());
+
                 if (bot->isDead() && revive)
                 {
                     bot->ResurrectPlayer(1.0f, false);
                     botAI->TellMasterNoFacing("I live, again!");
+                    botAI->GetAiObjectContext()->GetValue<GuidVector>("prioritized targets")->Reset();
                 }
 
                 player->GetMotionMaster()->Clear();
+                AI_VALUE(LastMovement&, "last movement").clear();
                 player->TeleportTo(mapId, x, y, z, 0);
                 return true;
             }

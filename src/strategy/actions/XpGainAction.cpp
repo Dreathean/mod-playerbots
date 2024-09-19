@@ -9,13 +9,12 @@
 #include "GuildMgr.h"
 #include "PlayerbotAIConfig.h"
 #include "Playerbots.h"
+#include "BroadcastHelper.h"
 
 bool XpGainAction::Execute(Event event)
 {
     context->GetValue<uint32>("death count")->Set(0);
 
-    if (!sRandomPlayerbotMgr->IsRandomBot(bot) || sPlayerbotAIConfig->playerbotsXPrate == 1)
-        return true;
 
     WorldPacket p(event.getPacket());  // (8+4+1+4+8)
     ObjectGuid guid;
@@ -35,27 +34,15 @@ bool XpGainAction::Execute(Event event)
         p >> groupBonus;  // 8 group bonus
     }
 
-    if (sPlayerbotAIConfig->randomBotGuildTalk && bot->GetGuildId() && urand(0, 10))
+    Creature* creature = botAI->GetCreature(guid);
+    if (creature && !creature->GetMap()->IsDungeon())
     {
-        Creature* creature = botAI->GetCreature(guid);
-        if (creature && (creature->isElite() || creature->isWorldBoss() || creature->GetLevel() > 61 ||
-                         creature->GetLevel() > bot->GetLevel() + 4))
-        {
-            Guild* guild = sGuildMgr->GetGuildById(bot->GetGuildId());
-            if (guild)
-            {
-                std::string toSay = "";
-
-                if (urand(0, 3))
-                    toSay = "Wow I just killed " + creature->GetName() + " !";
-                else
-                    toSay = "Awesome that " + creature->GetName() + " went down quickly !";
-
-                guild->BroadcastToGuild(bot->GetSession(), false, toSay, LANG_UNIVERSAL);
-            }
-        }
+        BroadcastHelper::BroadcastKill(botAI, bot, creature);
     }
 
+    if (!sRandomPlayerbotMgr->IsRandomBot(bot) || sPlayerbotAIConfig->playerbotsXPrate == 1)
+        return true;
+    
     Unit* victim = nullptr;
     if (guid)
         victim = botAI->GetUnit(guid);

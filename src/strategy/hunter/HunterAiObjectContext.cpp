@@ -143,12 +143,14 @@ public:
         creators["scorpid sting"] = &HunterAiObjectContextInternal::scorpid_sting;
         creators["hunter's mark"] = &HunterAiObjectContextInternal::hunters_mark;
         creators["mend pet"] = &HunterAiObjectContextInternal::mend_pet;
+        creators["kill command"] = &HunterAiObjectContextInternal::kill_command;
         creators["revive pet"] = &HunterAiObjectContextInternal::revive_pet;
         creators["call pet"] = &HunterAiObjectContextInternal::call_pet;
         creators["black arrow"] = &HunterAiObjectContextInternal::black_arrow;
         creators["freezing trap"] = &HunterAiObjectContextInternal::freezing_trap;
         creators["rapid fire"] = &HunterAiObjectContextInternal::rapid_fire;
         creators["boost"] = &HunterAiObjectContextInternal::rapid_fire;
+        creators["deterrence"] = &HunterAiObjectContextInternal::deterrence;
         creators["readiness"] = &HunterAiObjectContextInternal::readiness;
         creators["aspect of the hawk"] = &HunterAiObjectContextInternal::aspect_of_the_hawk;
         creators["aspect of the monkey"] = &HunterAiObjectContextInternal::aspect_of_the_monkey;
@@ -170,6 +172,7 @@ public:
         creators["steady shot"] = &HunterAiObjectContextInternal::steady_shot;
         creators["kill shot"] = &HunterAiObjectContextInternal::kill_shot;
         creators["misdirection on main tank"] = &HunterAiObjectContextInternal::misdirection_on_main_tank;
+        creators["silencing shot"] = &HunterAiObjectContextInternal::silencing_shot;
     }
 
 private:
@@ -195,11 +198,13 @@ private:
     static Action* scorpid_sting(PlayerbotAI* botAI) { return new CastScorpidStingAction(botAI); }
     static Action* hunters_mark(PlayerbotAI* botAI) { return new CastHuntersMarkAction(botAI); }
     static Action* mend_pet(PlayerbotAI* botAI) { return new CastMendPetAction(botAI); }
+    static Action* kill_command(PlayerbotAI* botAI) { return new CastKillCommandAction(botAI); }
     static Action* revive_pet(PlayerbotAI* botAI) { return new CastRevivePetAction(botAI); }
     static Action* call_pet(PlayerbotAI* botAI) { return new CastCallPetAction(botAI); }
     static Action* black_arrow(PlayerbotAI* botAI) { return new CastBlackArrow(botAI); }
     static Action* freezing_trap(PlayerbotAI* botAI) { return new CastFreezingTrap(botAI); }
     static Action* rapid_fire(PlayerbotAI* botAI) { return new CastRapidFireAction(botAI); }
+    static Action* deterrence(PlayerbotAI* botAI) { return new CastDeterrenceAction(botAI); }
     static Action* readiness(PlayerbotAI* botAI) { return new CastReadinessAction(botAI); }
     static Action* aspect_of_the_hawk(PlayerbotAI* botAI) { return new CastAspectOfTheHawkAction(botAI); }
     static Action* aspect_of_the_monkey(PlayerbotAI* botAI) { return new CastAspectOfTheMonkeyAction(botAI); }
@@ -215,6 +220,8 @@ private:
     static Action* steady_shot(PlayerbotAI* ai) { return new CastSteadyShotAction(ai); }
     static Action* kill_shot(PlayerbotAI* ai) { return new CastKillShotAction(ai); }
     static Action* misdirection_on_main_tank(PlayerbotAI* ai) { return new CastMisdirectionOnMainTankAction(ai); }
+    static Action* silencing_shot(PlayerbotAI* ai) { return new CastSilencingShotAction(ai); }
+    
 };
 
 HunterAiObjectContext::HunterAiObjectContext(PlayerbotAI* botAI) : AiObjectContext(botAI)
