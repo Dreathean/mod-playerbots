@@ -18,8 +18,11 @@
 
 bool TellRpgStatusAction::Execute(Event event)
 {
+    Player* owner = event.getOwner();
+    if (!owner)
+        return false;
     std::string out = botAI->rpgInfo.ToString();
-    botAI->TellMasterNoFacing(out);
+    bot->Whisper(out.c_str(), LANG_UNIVERSAL, owner);
     return true;
 }
 
@@ -44,7 +47,7 @@ bool NewRpgStatusUpdateAction::Execute(Event event)
                 }
             }
             // IDLE -> GO_INNKEEPER
-            else if (bot->GetLevel() >= 6 && roll <= 40)
+            else if (roll <= 45)
             {
                 WorldPosition pos = SelectRandomInnKeeperPos();
                 if (pos != WorldPosition() && bot->GetExactDist(pos) > 50.0f)
@@ -197,7 +200,11 @@ WorldPosition NewRpgStatusUpdateAction::SelectRandomInnKeeperPos()
     {
         if (bot->GetMapId() != loc.GetMapId())
             continue;
-
+        
+        if (bot->GetMap()->GetZoneId(bot->GetPhaseMask(), loc.GetPositionX(), loc.GetPositionY(), loc.GetPositionZ()) !=
+            bot->GetZoneId())
+            continue;
+            
         float range = bot->GetLevel() <= 5 ? 500.0f : 2500.0f;
         if (bot->GetExactDist(loc) < range)
         {
@@ -237,22 +244,22 @@ bool NewRpgGoFarAwayPosAction::MoveFarTo(WorldPosition dest)
     const float z = bot->GetPositionZ();
     float rx, ry, rz;
     bool found = false;
-    int attempt = 10;
+    int attempt = 3;
     while (--attempt)
     {
         float angle = bot->GetAngle(&dest);
-        float delta = (rand_norm() - 0.5) * M_PI * 2;
+        float delta = urand(1, 100) <= 75 ? (rand_norm() - 0.5) * M_PI * 0.5 : (rand_norm() - 0.5) * M_PI * 2;
         angle += delta;
         float dis = rand_norm() * pathFinderDis;
         float dx = x + cos(angle) * dis;
         float dy = y + sin(angle) * dis;
-        float dz = z + 5.0f;
+        float dz = z + 0.5f;
         bot->UpdateAllowedPositionZ(dx, dy, dz);
         PathGenerator path(bot);
         path.CalculatePath(dx, dy, dz);
         PathType type = path.GetPathType();
 
-        bool canReach = type == PATHFIND_INCOMPLETE || type == PATHFIND_NORMAL;
+        bool canReach = type == PATHFIND_NORMAL;
 
         if (canReach && fabs(delta) <= minDelta)
         {

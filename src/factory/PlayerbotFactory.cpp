@@ -2185,6 +2185,7 @@ void PlayerbotFactory::InitSkills()
     uint32 skillLevel = bot->GetLevel() < 40 ? 0 : 1;
     uint32 dualWieldLevel = bot->GetLevel() < 20 ? 0 : 1;
     SetRandomSkill(SKILL_DEFENSE);
+    SetRandomSkill(SKILL_UNARMED);
     switch (bot->getClass())
     {
         case CLASS_DRUID:
@@ -2328,8 +2329,8 @@ void PlayerbotFactory::SetRandomSkill(uint16 id)
 
     uint16 step = bot->GetSkillValue(id) ? bot->GetSkillStep(id) : 1;
 
-    if (!bot->HasSkill(id) || value > curValue)
-        bot->SetSkill(id, step, value, maxValue);
+    // if (!bot->HasSkill(id) || value > curValue)
+    bot->SetSkill(id, step, value, maxValue);
 }
 
 void PlayerbotFactory::InitAvailableSpells()
@@ -2475,7 +2476,7 @@ void PlayerbotFactory::InitClassSpells()
         case CLASS_WARLOCK:
             bot->learnSpell(687, true);
             bot->learnSpell(686, true);
-            bot->learnSpell(688, true);  // summon imp
+            bot->learnSpell(688, false);  // summon imp
             if (level >= 10)
             {
                 bot->learnSpell(697, false);  // summon voidwalker
@@ -2825,10 +2826,10 @@ uint32 PlayerbotFactory::CalcMixedGearScore(uint32 gs, uint32 quality)
 
 void PlayerbotFactory::InitMounts()
 {
-    uint32 firstmount = 20;
-    uint32 secondmount = 40;
-    uint32 thirdmount = 60;
-    uint32 fourthmount = 70;
+    uint32 firstmount = sPlayerbotAIConfig->useGroundMountAtMinLevel;
+    uint32 secondmount = sPlayerbotAIConfig->useFastGroundMountAtMinLevel;
+    uint32 thirdmount = sPlayerbotAIConfig->useFlyMountAtMinLevel;
+    uint32 fourthmount = sPlayerbotAIConfig->useFastFlyMountAtMinLevel;
 
     if (bot->GetLevel() < firstmount)
         return;
@@ -2867,7 +2868,7 @@ void PlayerbotFactory::InitMounts()
             fast = {23225, 23223, 23222};
             break;
         case RACE_TROLL:
-            slow = {10796, 10799, 8395, 472};
+            slow = {10796, 10799, 8395};
             fast = {23241, 23242, 23243};
             break;
         case RACE_DRAENEI:
@@ -3130,7 +3131,7 @@ void PlayerbotFactory::InitReagents()
                 items.push_back({17030, 40});  // Ankh
             break;
         case CLASS_WARLOCK:
-            items.push_back({6265, 10});  // shard
+            items.push_back({6265, 20});  // shard
             break;
         case CLASS_PRIEST:
             if (level >= 48 && level < 60)

@@ -337,7 +337,7 @@ void RandomPlayerbotMgr::UpdateAIInternal(uint32 elapsed, bool /*minimal*/)
     // which prevents unneeded expensive GameTime calls.
     if (_isBotInitializing)
     {
-        _isBotInitializing = GameTime::GetUptime().count() < sPlayerbotAIConfig->maxRandomBots * 0.15;
+        _isBotInitializing = GameTime::GetUptime().count() < sPlayerbotAIConfig->maxRandomBots * (0.11 + 0.4);
     }
 
     uint32 updateIntervalTurboBoost = _isBotInitializing ? 1 : sPlayerbotAIConfig->randomBotUpdateInterval;
@@ -464,6 +464,9 @@ uint32 RandomPlayerbotMgr::AddRandomBots()
         maxAllowedBotCount -= currentBots.size();
         maxAllowedBotCount = std::min(sPlayerbotAIConfig->randomBotsPerInterval, maxAllowedBotCount);
 
+        uint32 allowedAllianceCount = maxAllowedBotCount * (sPlayerbotAIConfig->randomBotAllianceRatio) / (sPlayerbotAIConfig->randomBotAllianceRatio + sPlayerbotAIConfig->randomBotHordeRatio);
+        uint32 allowedHordeCount = maxAllowedBotCount - allowedAllianceCount;
+
         for (std::vector<uint32>::iterator i = sPlayerbotAIConfig->randomBotAccounts.begin();
              i != sPlayerbotAIConfig->randomBotAccounts.end(); i++)
         {
@@ -500,17 +503,29 @@ uint32 RandomPlayerbotMgr::AddRandomBots()
 
                 if (sPlayerbotAIConfig->disableDeathKnightLogin)
                 {
-                    QueryResult result = CharacterDatabase.Query("Select class from characters where guid = {}", guid);
-                    if (!result)
-                    {
-                        continue;
-                    }
-                    Field* fields = result->Fetch();
-                    uint32 rClass = fields[0].Get<uint32>();
+                    uint32 rClass = fields[1].Get<uint8>();
                     if (rClass == CLASS_DEATH_KNIGHT)
                     {
                         continue;
                     }
+                }
+                uint32 rRace = fields[2].Get<uint8>();
+                uint32 isAlliance = IsAlliance(rRace);
+                if (!allowedAllianceCount && isAlliance)
+                {
+                    continue;
+                }
+                if (!allowedHordeCount && !isAlliance)
+                {
+                    continue;
+                }
+                if (isAlliance)
+                {
+                    allowedAllianceCount--;
+                }
+                else
+                {
+                    allowedHordeCount--;
                 }
                 guids.push_back(guid);
             } while (result->NextRow());
@@ -540,7 +555,7 @@ uint32 RandomPlayerbotMgr::AddRandomBots()
 
         if (maxAllowedBotCount)
             LOG_ERROR("playerbots",
-                      "Not enough random bot accounts available. Need {} more, try to increase RandomBotAccountCount "
+                      "Not enough random bot accounts available. Try to increase RandomBotAccountCount "
                       "in your conf file",
                       ceil(maxAllowedBotCount / 10));
     }
@@ -1050,16 +1065,11 @@ bool RandomPlayerbotMgr::ProcessBot(uint32 bot)
         return false;
     }
 
-    uint32 isLogginIn = GetEventValue(bot, "login");
-    if (isLogginIn)
-        return false;
-
     uint32 randomTime;
     if (!player)
     {
         AddPlayerBot(botGUID, 0);
         randomTime = urand(1, 2);
-        SetEventValue(bot, "login", 1, randomTime);
 
         uint32 randomBotUpdateInterval = _isBotInitializing ? 1 : sPlayerbotAIConfig->randomBotUpdateInterval;
         randomTime = urand(std::max(5, static_cast<int>(randomBotUpdateInterval * 0.5)),
@@ -1081,8 +1091,6 @@ bool RandomPlayerbotMgr::ProcessBot(uint32 bot)
 
         return true;
     }
-
-    SetEventValue(bot, "login", 0, 0);
 
     if (!player->IsInWorld())
         return false;
@@ -1495,7 +1503,7 @@ void RandomPlayerbotMgr::PrepareTeleportCache()
     }
     LOG_INFO("playerbots", ">> {} locations for level collected.", collected_locs);
 
-    LOG_INFO("playerbots", "Preparing innkeepers locations for level collected...");
+    LOG_INFO("playerbots", "Preparing innkeepers locations for level...");
     if (sPlayerbotAIConfig->enableNewRpgStrategy)
     {
         results = WorldDatabase.Query(
@@ -2489,7 +2497,6 @@ void RandomPlayerbotMgr::OnPlayerLogin(Player* player)
     if (IsRandomBot(player))
     {
         ObjectGuid::LowType guid = player->GetGUID().GetCounter();
-        SetEventValue(guid, "login", 0, 0);
     }
     else
     {
