@@ -35,6 +35,7 @@ enum class HealingManaEfficiency : uint8
 };
 
 #define MAX_SPECNO 20
+#define MAX_WORLDBUFF_SPECNO 3
 
 class PlayerbotAIConfig
 {
@@ -54,7 +55,7 @@ public:
     bool IsInPvpProhibitedArea(uint32 id);
 
     bool enabled;
-    bool allowGuildBots, allowPlayerBots;
+    bool allowAccountBots, allowGuildBots, allowTrustedAccountBots;
     bool randomBotGuildNearby, randomBotInvitePlayer, inviteChat;
     uint32 globalCoolDown, reactDelay, maxWaitForMove, disableMoveSplinePath, maxMovementSearchTime, expireActionTime,
         dispelAuraDuration, passiveDelay, repeatDelay, errorDelay, rpgDelay, sitDelay, returnDelay, lootDelay;
@@ -85,7 +86,7 @@ public:
     float randomGearLoweringChance;
     int32 randomGearQualityLimit;
     int32 randomGearScoreLimit;
-    float randomBotMaxLevelChance;
+    float randomBotMinLevelChance, randomBotMaxLevelChance;
     float randomBotRpgChance;
     uint32 minRandomBots, maxRandomBots;
     uint32 randomBotUpdateInterval, randomBotCountChangeMinInterval, randomBotCountChangeMaxInterval;
@@ -94,7 +95,7 @@ public:
     uint32 minRandomBotChangeStrategyTime, maxRandomBotChangeStrategyTime;
     uint32 minRandomBotReviveTime, maxRandomBotReviveTime;
     uint32 minRandomBotTeleportInterval, maxRandomBotTeleportInterval;
-    uint32 randomBotInWorldWithRotationDisabled;
+    uint32 permanantlyInWorldTime;
     uint32 minRandomBotPvpTime, maxRandomBotPvpTime;
     uint32 randomBotsPerInterval;
     uint32 minRandomBotsPriceChangeInterval, maxRandomBotsPriceChangeInterval;
@@ -234,8 +235,8 @@ public:
     uint32 limitEnchantExpansion;
     uint32 limitGearExpansion;
     uint32 randombotStartingLevel;
-    bool enableRotation;
-    uint32 rotationPoolSize;
+    bool enablePeriodicOnlineOffline;
+    float periodicOnlineOfflineRatio;
     bool gearscorecheck;
     bool randomBotPreQuests;
 
@@ -274,10 +275,11 @@ public:
     bool randomBotShowCloak;
     bool randomBotFixedLevel;
     bool disableRandomLevels;
-    uint32 playerbotsXPrate;
+    float playerbotsXPrate;
     uint32 randomBotAllianceRatio;
     uint32 randomBotHordeRatio;
     bool disableDeathKnightLogin;
+    bool limitTalentsExpansion;
     uint32 botActiveAlone;
     uint32 BotActiveAloneForceWhenInRadius;
     bool BotActiveAloneForceWhenInZone;
@@ -311,6 +313,7 @@ public:
     bool autoLearnQuestSpells;
     bool autoTeleportForLevel;
     bool randomBotGroupNearby;
+    int32 enableRandomBotTrading;
     uint32 tweakValue;  // Debugging config
 
     uint32 randomBotArenaTeamCount;
@@ -334,7 +337,7 @@ public:
     bool botRepairWhenSummon;
     bool autoInitOnly;
     float autoInitEquipLevelLimitRatio;
-    int32 maxAddedBots, maxAddedBotsPerClass;
+    int32 maxAddedBots;
     int32 addClassCommand;
     int32 addClassAccountPoolSize;
     int32 maintenanceCommand;
@@ -358,7 +361,7 @@ public:
     }
     void log(std::string const fileName, const char* str, ...);
 
-    void loadWorldBuf(uint32 factionId, uint32 classId, uint32 specId, uint32 minLevel, uint32 maxLevel);
+    void loadWorldBuff(uint32 factionId, uint32 classId, uint32 specId, uint32 minLevel, uint32 maxLevel);
     static std::vector<std::vector<uint32>> ParseTempTalentsOrder(uint32 cls, std::string temp_talents_order);
     static std::vector<std::vector<uint32>> ParseTempPetTalentsOrder(uint32 spec, std::string temp_talents_order);
 };

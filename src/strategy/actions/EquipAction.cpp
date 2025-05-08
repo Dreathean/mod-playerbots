@@ -67,6 +67,19 @@ void EquipAction::EquipItem(Item* item)
     uint32 itemId = itemProto->ItemId;
     uint8 invType = itemProto->InventoryType;
 
+    // Ensure only the correct classes attempt to equip relics
+    if (itemProto->SubClass == ITEM_SUBCLASS_ARMOR_IDOL && bot->getClass() != CLASS_DRUID)
+        return;
+
+    if (itemProto->SubClass == ITEM_SUBCLASS_ARMOR_SIGIL && bot->getClass() != CLASS_DEATH_KNIGHT)
+        return;
+    
+    if (itemProto->SubClass == ITEM_SUBCLASS_ARMOR_LIBRAM && bot->getClass() != CLASS_PALADIN)
+        return;
+
+    if (itemProto->SubClass == ITEM_SUBCLASS_ARMOR_TOTEM && bot->getClass() != CLASS_SHAMAN)
+        return;
+
     // Handle ammunition separately
     if (invType == INVTYPE_AMMO)
     {
@@ -82,7 +95,6 @@ void EquipAction::EquipItem(Item* item)
     if (itemProto->Class == ITEM_CLASS_CONTAINER)
     {
         // Attempt to equip as a bag
-        Bag* pBag = reinterpret_cast<Bag*>(item);
         uint8 newBagSlot = GetSmallestBagSlot();
         if (newBagSlot > 0)
         {
@@ -132,7 +144,8 @@ void EquipAction::EquipItem(Item* item)
         Item* currentMHItem = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
         bool have2HWeaponEquipped = (currentMHItem && currentMHItem->GetTemplate()->InventoryType == INVTYPE_2HWEAPON);
 
-        bool canDualWieldOrTG = (canDualWield || (canTitanGrip && isTwoHander));
+        // bool canDualWieldOrTG = (canDualWield || (canTitanGrip && isTwoHander));
+        bool canDualWieldOrTG = (canDualWield || isTwoHander);
 
         // If this is a weapon and we can dual wield or Titan Grip, check if we can improve main/off-hand setup
         if (isWeapon && canDualWieldOrTG)
@@ -154,7 +167,7 @@ void EquipAction::EquipItem(Item* item)
             // Determine where this weapon can go
             bool canGoMain = (invType == INVTYPE_WEAPON ||
                               invType == INVTYPE_WEAPONMAINHAND ||
-                              (canTitanGrip && isTwoHander));
+                              isTwoHander);
 
             bool canTGOff = false;
             if (canTitanGrip && isTwoHander && isValidTGWeapon)
@@ -186,7 +199,8 @@ void EquipAction::EquipItem(Item* item)
             // and if conditions allow (e.g. no conflicting 2H logic)
             bool betterThanMH = (newItemScore > mainHandScore);
             bool mhConditionOK = ((invType != INVTYPE_2HWEAPON && !have2HWeaponEquipped) ||
-                                  (canTitanGrip && isValidTGWeapon));
+                      (isTwoHander && !canTitanGrip) ||
+                      (canTitanGrip && isValidTGWeapon));
 
             if (canGoMain && betterThanMH && mhConditionOK)
             {
@@ -288,7 +302,7 @@ void EquipAction::EquipItem(Item* item)
     }
 
     std::ostringstream out;
-    out << "equipping " << chat->FormatItem(itemProto);
+    out << "Equipping " << chat->FormatItem(itemProto);
     botAI->TellMaster(out);
 }
 
@@ -318,9 +332,9 @@ bool EquipUpgradesAction::Execute(Event event)
         ItemUsage usage = AI_VALUE2(ItemUsage, "item usage", i->first);
         if (usage == ITEM_USAGE_EQUIP || usage == ITEM_USAGE_REPLACE || usage == ITEM_USAGE_BAD_EQUIP)
         {
-            // LOG_INFO("playerbots", "Bot {} <{}> auto equips item {} ({})", bot->GetGUID().ToString().c_str(),
-            // bot->GetName().c_str(), i->first, usage == 1 ? "no item in slot" : usage == 2 ? "replace" : usage == 3 ?
-            // "wrong item but empty slot" : "");
+            // LOG_INFO("playerbots", "Bot {} <{}> EquipUpgradesAction {} ({})", bot->GetGUID().ToString().c_str(),
+            //    bot->GetName().c_str(), i->first, usage == 1 ? "no item in slot" : usage == 2 ? "replace" : usage == 3 ?
+            //    "wrong item but empty slot" : "");
             items.insert(i->first);
         }
     }
@@ -329,7 +343,7 @@ bool EquipUpgradesAction::Execute(Event event)
     return true;
 }
 
-bool EquipUpgradeAction::Execute(Event event)
+bool EquipUpgradeAction::Execute(Event /*event*/)
 {
     ListItemsVisitor visitor;
     IterateItems(&visitor, ITERATE_ITEMS_IN_BAGS);
@@ -340,6 +354,9 @@ bool EquipUpgradeAction::Execute(Event event)
         ItemUsage usage = AI_VALUE2(ItemUsage, "item usage", i->first);
         if (usage == ITEM_USAGE_EQUIP || usage == ITEM_USAGE_REPLACE || usage == ITEM_USAGE_BAD_EQUIP)
         {
+            // LOG_INFO("playerbots", "Bot {} <{}> EquipUpgradeAction item {} ({})", bot->GetGUID().ToString().c_str(),
+            //    bot->GetName().c_str(), i->first, usage == 1 ? "no item in slot" : usage == 2 ? "replace" : usage == 3 ?
+            //    "wrong item but empty slot" : "");
             items.insert(i->first);
         }
     }

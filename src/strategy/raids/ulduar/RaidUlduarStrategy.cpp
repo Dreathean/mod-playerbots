@@ -46,6 +46,114 @@ void RaidUlduarStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
         "razorscale fuse armor trigger",
         NextAction::array(0, new NextAction("razorscale fuse armor action", ACTION_RAID + 2), nullptr)));
 
+    triggers.push_back(new TriggerNode(
+        "razorscale fire resistance trigger",
+        NextAction::array(0, new NextAction("razorscale fire resistance action", ACTION_RAID), nullptr)));
+
+    //
+    // Ignis
+    //
+    triggers.push_back(new TriggerNode(
+        "ignis fire resistance trigger",
+        NextAction::array(0, new NextAction("ignis fire resistance action", ACTION_RAID), nullptr)));
+
+    //
+    // Iron Assembly
+    //
+    triggers.push_back(new TriggerNode(
+        "iron assembly lightning tendrils trigger",
+        NextAction::array(0, new NextAction("iron assembly lightning tendrils action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "iron assembly overload trigger",
+        NextAction::array(0, new NextAction("iron assembly overload action", ACTION_RAID), nullptr)));
+
+    //
+    // Kologarn
+    //
+    triggers.push_back(new TriggerNode(
+        "kologarn fall from floor trigger",
+        NextAction::array(0, new NextAction("kologarn fall from floor action", ACTION_RAID + 1), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "kologarn rti target trigger",
+        NextAction::array(0, new NextAction("kologarn rti target action", ACTION_RAID + 1), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "kologarn eyebeam trigger",
+        NextAction::array(0, new NextAction("kologarn eyebeam action", ACTION_RAID + 1), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "kologarn attack dps target trigger",
+        NextAction::array(0, new NextAction("attack rti target", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "kologarn mark dps target trigger",
+        NextAction::array(0, new NextAction("kologarn mark dps target action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "kologarn nature resistance trigger",
+        NextAction::array(0, new NextAction("kologarn nature resistance action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "kologarn rubble slowdown trigger",
+        NextAction::array(0, new NextAction("kologarn rubble slowdown action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "kologarn crunch armor trigger",
+        NextAction::array(0, new NextAction("kologarn crunch armor action", ACTION_RAID), nullptr)));
+
+    //
+    // Hodir
+    //
+    triggers.push_back(new TriggerNode(
+        "hodir near snowpacked icicle",
+        NextAction::array(0, new NextAction("hodir move snowpacked icicle", ACTION_RAID + 1), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "hodir biting cold",
+        NextAction::array(0, new NextAction("hodir biting cold jump", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "hodir frost resistance trigger",
+        NextAction::array(0, new NextAction("hodir frost resistance action", ACTION_RAID), nullptr)));
+
+    //
+    // Freya
+    //
+    triggers.push_back(new TriggerNode(
+        "freya near nature bomb",
+        NextAction::array(0, new NextAction("freya move away nature bomb", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "freya nature resistance trigger",
+        NextAction::array(0, new NextAction("freya nature resistance action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "freya fire resistance trigger",
+        NextAction::array(0, new NextAction("freya fire resistance action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "freya mark dps target trigger",
+        NextAction::array(0, new NextAction("freya mark dps target action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "freya move to healing spore trigger",
+        NextAction::array(0, new NextAction("freya move to healing spore action", ACTION_RAID), nullptr)));
+
+    //
+    // Thorim
+    //
+    triggers.push_back(new TriggerNode(
+        "thorim nature resistance trigger",
+        NextAction::array(0, new NextAction("thorim nature resistance action", ACTION_RAID), nullptr)));
+
+    //
+    // Mimiron
+    //
+    triggers.push_back(new TriggerNode(
+        "mimiron fire resistance trigger",
+        NextAction::array(0, new NextAction("mimiron fire resistance action", ACTION_RAID), nullptr)));
 }
 
 void RaidUlduarStrategy::InitMultipliers(std::vector<Multiplier*>& multipliers)

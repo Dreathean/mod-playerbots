@@ -8,6 +8,17 @@
 #include "CreatureAI.h"
 #include "Playerbots.h"
 
+enum PetSpells
+{
+    PET_PROWL_1 = 24450,
+    PET_PROWL_2 = 24452,
+    PET_PROWL_3 = 24453,
+    PET_COWER = 1742,
+    PET_LEAP = 47482
+};
+
+static std::vector<uint32> disabledPetSpells = {PET_PROWL_1, PET_PROWL_2, PET_PROWL_3, PET_COWER, PET_LEAP};
+
 bool MeleeAction::isUseful()
 {
     // do not allow if can't attack from vehicle
@@ -44,19 +55,20 @@ bool TogglePetSpellAutoCastAction::Execute(Event event)
     {
         if (itr->second.state == PETSPELL_REMOVED)
             continue;
-        
+
         uint32 spellId = itr->first;
         const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId);
         if (!spellInfo->IsAutocastable())
             continue;
 
         bool shouldApply = true;
-        // spellId == 4511 || spellId == 54424 || spellId == 57564 || spellId == 57565 ||
-        // spellId == 57566 || spellId == 57567 ||
-        // cat stealth, prowl
-        if (spellId == 1742 || spellId == 24450)
+        for (uint32 disabledSpell : disabledPetSpells)
         {
-            shouldApply = false;
+            if (spellId == disabledSpell)
+            {
+                shouldApply = false;
+                break;
+            }
         }
         bool isAutoCast = false;
         for (unsigned int& m_autospell : pet->m_autospells)
