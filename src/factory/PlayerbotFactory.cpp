@@ -224,24 +224,22 @@ void PlayerbotFactory::Randomize(bool incremental)
     {
         bot->resetTalents(true);
     }
-    // bot->SaveToDB(false, false);
-    ClearSkills();
-    // bot->SaveToDB(false, false);
-    ClearSpells();
-    // bot->SaveToDB(false, false);
     if (!incremental)
     {
+        ClearSkills();
+        ClearSpells();
         ResetQuests();
+        if (!sPlayerbotAIConfig->equipmentPersistence || level < sPlayerbotAIConfig->equipmentPersistenceLevel)
+        {
+            ClearAllItems();
+        }
     }
-    if (!sPlayerbotAIConfig->equipmentPersistence || level < sPlayerbotAIConfig->equipmentPersistenceLevel)
-    {
-        ClearAllItems();
-    }
+    ClearInventory();
     bot->RemoveAllSpellCooldown();
     UnbindInstance();
 
     bot->GiveLevel(level);
-    bot->InitStatsForLevel();
+    bot->InitStatsForLevel(true);
     CancelAuras();
     // bot->SaveToDB(false, false);
     if (pmo)
@@ -280,7 +278,6 @@ void PlayerbotFactory::Randomize(bool incremental)
     LOG_DEBUG("playerbots", "Initializing skills (step 1)...");
     pmo = sPerformanceMonitor->start(PERF_MON_RNDBOT, "PlayerbotFactory_Skills1");
     InitSkills();
-    // InitTradeSkills();
     if (pmo)
         pmo->finish();
 
@@ -337,7 +334,8 @@ void PlayerbotFactory::Randomize(bool incremental)
     if (!incremental || !sPlayerbotAIConfig->equipmentPersistence ||
         bot->GetLevel() < sPlayerbotAIConfig->equipmentPersistenceLevel)
     {
-        InitEquipment(incremental, incremental ? false : sPlayerbotAIConfig->twoRoundsGearInit);
+        if (sPlayerbotAIConfig->incrementalGearInit || !incremental)
+            InitEquipment(incremental, incremental ? false : sPlayerbotAIConfig->twoRoundsGearInit);
     }
     // bot->SaveToDB(false, false);
     if (pmo)
@@ -813,6 +811,10 @@ void PlayerbotFactory::InitPetTalents()
 void PlayerbotFactory::InitPet()
 {
     Pet* pet = bot->GetPet();
+
+    if (!pet && bot->GetPetStable() && bot->GetPetStable()->CurrentPet)
+        return;
+
     if (!pet)
     {
         if (bot->getClass() != CLASS_HUNTER || bot->GetLevel() < 10)
@@ -861,7 +863,8 @@ void PlayerbotFactory::InitPet()
             uint32 pet_number = sObjectMgr->GeneratePetNumber();
             if (bot->GetPetStable() && bot->GetPetStable()->CurrentPet)
             {
-                bot->GetPetStable()->CurrentPet.value();
+                auto petGuid = bot->GetPetStable()->CurrentPet.value(); // To correct the build warnin in VS
+                // bot->GetPetStable()->CurrentPet.value();
                 // bot->GetPetStable()->CurrentPet.reset();
                 bot->RemovePet(nullptr, PET_SAVE_AS_CURRENT);
                 bot->RemovePet(nullptr, PET_SAVE_NOT_IN_SLOT);
@@ -1019,9 +1022,21 @@ void PlayerbotFactory::InitTalentsTree(bool increment /*false*/, bool use_templa
         /// @todo: match current talent with template
         specTab = AiFactory::GetPlayerSpecTab(bot);
         /// @todo: fix cat druid hardcode
-        if (bot->getClass() == CLASS_DRUID && specTab == DRUID_TAB_FERAL && bot->GetLevel() >= 20 &&
-            !bot->HasAura(16931))
-            specTab = 3;
+        if (bot->getClass() == CLASS_DRUID && specTab == DRUID_TAB_FERAL && bot->GetLevel() >= 20)
+        {
+            bool isCat = !bot->HasAura(16931);
+            if (!isCat && bot->GetLevel() == 20)
+            {
+                uint32 bearP = sPlayerbotAIConfig->randomClassSpecProb[cls][1];
+                uint32 catP = sPlayerbotAIConfig->randomClassSpecProb[cls][3];
+                if (urand(1, bearP + catP) <= catP)
+                    isCat = true;
+            }
+            if (isCat)
+            {
+                specTab = 3;
+            }
+        }
     }
     else
     {
@@ -1594,9 +1609,51 @@ void Shuffle(std::vector<uint32>& items)
 
 void PlayerbotFactory::InitEquipment(bool incremental, bool second_chance)
 {
+    if (incremental && !sPlayerbotAIConfig->incrementalGearInit)
+        return;
+    
+    if (level < 5) {
+        // original items
+        if (CharStartOutfitEntry const* oEntry = GetCharStartOutfitEntry(bot->getRace(), bot->getClass(), bot->getGender()))
+        {
+            for (int j = 0; j < MAX_OUTFIT_ITEMS; ++j)
+            {
+                if (oEntry->ItemId[j] <= 0)
+                    continue;
+
+                uint32 itemId = oEntry->ItemId[j];
+                
+                // skip hearthstone
+                if (itemId == 6948)
+                    continue;
+                
+                // just skip, reported in ObjectMgr::LoadItemTemplates
+                ItemTemplate const* iProto = sObjectMgr->GetItemTemplate(itemId);
+                if (!iProto)
+                    continue;
+
+                // BuyCount by default
+                uint32 count = iProto->BuyCount;
+
+                // special amount for food/drink
+                if (iProto->Class == ITEM_CLASS_CONSUMABLE && iProto->SubClass == ITEM_SUBCLASS_FOOD)
+                {
+                    continue;
+                }
+
+                if (bot->HasItemCount(itemId, count)) {
+                    continue;
+                }
+
+                bot->StoreNewItemInBestSlots(itemId, count);
+            }
+        }
+        return;
+    }
+    
     std::unordered_map<uint8, std::vector<uint32>> items;
     // int tab = AiFactory::GetPlayerSpecTab(bot);
-
+    
     uint32 blevel = bot->GetLevel();
     int32 delta = std::min(blevel, 10u);
 
@@ -1738,7 +1795,7 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool second_chance)
 
         if (incremental && oldItem)
         {
-            float old_score = calculator.CalculateItem(oldItem->GetEntry());
+            float old_score = calculator.CalculateItem(oldItem->GetEntry(), oldItem->GetItemRandomPropertyId());
             if (bestScoreForSlot < 1.2f * old_score)
                 continue;
         }
@@ -2200,33 +2257,15 @@ void PlayerbotFactory::InitSkills()
     //uint32 maxValue = level * 5; //not used, line marked for removal.
     bot->UpdateSkillsForLevel();
 
-    auto SafeLearn = [this](uint32 spellId)
-    {
-        if (!bot->HasSpell(spellId))
-            bot->learnSpell(spellId, false, true); // Avoid duplicate attempts in DB
-    };
-
-    // Define Riding skill according to level
-    if (bot->GetLevel() >= 70)
-        bot->SetSkill(SKILL_RIDING, 300, 300, 300);
-    else if (bot->GetLevel() >= 60)
-        bot->SetSkill(SKILL_RIDING, 225, 225, 225);
-    else if (bot->GetLevel() >= 40)
-        bot->SetSkill(SKILL_RIDING, 150, 150, 150);
-    else if (bot->GetLevel() >= 20)
-        bot->SetSkill(SKILL_RIDING, 75, 75, 75);
-    else
-        bot->SetSkill(SKILL_RIDING, 0, 0, 0);
-    
-    // Safe learning of mount spells
+    bot->SetSkill(SKILL_RIDING, 0, 0, 0);
     if (bot->GetLevel() >= sPlayerbotAIConfig->useGroundMountAtMinLevel)
-        SafeLearn(33388); // Apprentice
+        bot->learnSpell(33388);
     if (bot->GetLevel() >= sPlayerbotAIConfig->useFastGroundMountAtMinLevel)
-        SafeLearn(33391); // Journeyman
+        bot->learnSpell(33391);
     if (bot->GetLevel() >= sPlayerbotAIConfig->useFlyMountAtMinLevel)
-        SafeLearn(34090); // Expert
+        bot->learnSpell(34090);
     if (bot->GetLevel() >= sPlayerbotAIConfig->useFastFlyMountAtMinLevel)
-        SafeLearn(34091); // Artisan
+        bot->learnSpell(34091);
 
     uint32 skillLevel = bot->GetLevel() < 40 ? 0 : 1;
     uint32 dualWieldLevel = bot->GetLevel() < 20 ? 0 : 1;
@@ -3216,7 +3255,7 @@ void PlayerbotFactory::InitReagents()
                 items.push_back({17030, 40});  // Ankh
             break;
         case CLASS_WARLOCK:
-            items.push_back({6265, 20});  // shard
+            items.push_back({6265, 5});  // shard
             break;
         case CLASS_PRIEST:
             if (level >= 48 && level < 60)
@@ -3349,8 +3388,157 @@ void PlayerbotFactory::InitGlyphs(bool increment)
     uint8 cls = bot->getClass();
     uint8 tab = AiFactory::GetPlayerSpecTab(bot);
     /// @todo: fix cat druid hardcode
-    if (bot->getClass() == CLASS_DRUID && tab == DRUID_TAB_FERAL && bot->GetLevel() >= 20 && !bot->HasAura(16931))
-        tab = 3;
+
+    // Warrior PVP exceptions
+    if (bot->getClass() == CLASS_WARRIOR)
+    {
+        // Arms PvP (spec index 3): If the bot has the Second Wind talent
+        if (bot->HasAura(29838))
+            tab = 3;
+        // Fury PvP (spec index 4): If the bot has the Blood Craze talent
+        else if (bot->HasAura(16492))
+            tab = 4;
+        // Protection PvP (spec index 5): If the bot has the Gag Order talent
+        else if (bot->HasAura(12958))
+            tab = 5;
+    }
+
+    // Paladin PvP exceptions
+    if (bot->getClass() == CLASS_PALADIN)
+    {
+        // Holy PvP (spec index 3): If the bot has the Sacred Cleansing talent
+        if (bot->HasAura(53553))
+            tab = 3;
+        // Protection PvP (spec index 4): If the bot has the Reckoning talent
+        else if (bot->HasAura(20179))
+            tab = 4;
+        // Retribution PvP (spec index 5): If the bot has the Divine Purpose talent
+        else if (bot->HasAura(31872))
+            tab = 5;
+    }
+
+    // Hunter PvP exceptions
+    if (bot->getClass() == CLASS_HUNTER)
+    {
+        // Beast Mastery PvP (spec index 3): If the bot has the Thick Hide talent
+        if (bot->HasAura(19612))
+            tab = 3;
+        // Marksmanship PvP (spec index 4): If the bot has the Concussive Barrage talent
+        else if (bot->HasAura(35102))
+            tab = 4;
+        // Survival PvP (spec index 5): If the bot has the Entrapment talent and does NOT have the Concussive Barrage talent
+        else if (bot->HasAura(19388) && !bot->HasAura(35102))
+            tab = 5;
+    }
+
+    // Rogue PvP exceptions
+    if (bot->getClass() == CLASS_ROGUE)
+    {
+        // Assassination PvP (spec index 3): If the bot has the Deadly Brew talent
+        if (bot->HasAura(51626))
+            tab = 3;
+        // Combat PvP (spec index 4): If the bot has the Throwing Specialization talent
+        else if (bot->HasAura(51679))
+            tab = 4;
+        // Subtlety PvP (spec index 5): If the bot has the Waylay talent
+        else if (bot->HasAura(51696))
+            tab = 5;
+    }
+
+    // Priest PvP exceptions
+    if (bot->getClass() == CLASS_PRIEST)
+    {
+        // Discipline PvP (spec index 3): If the bot has the Improved Mana Burn talent
+        if (bot->HasAura(14772))
+            tab = 3;
+        // Holy PvP (spec index 4): If the bot has the Body and Soul talent
+        else if (bot->HasAura(64129))
+            tab = 4;
+        // Shadow PvP (spec index 5): If the bot has the Improved Vampiric Embrace talent
+        else if (bot->HasAura(27840))
+            tab = 5;
+    }
+
+    // Death Knight PvE/PvP exceptions
+    if (bot->getClass() == CLASS_DEATH_KNIGHT)
+    {
+        // Double Aura Blood PvE (spec index 3): If the bot has both the Abomination's Might and Improved Icy Talons
+        // talents
+        if (bot->HasAura(53138) && bot->HasAura(55610))
+            tab = 3;
+        // Blood PvP (spec index 4): If the bot has the Sudden Doom talent
+        else if (bot->HasAura(49529))
+            tab = 4;
+        // Frost PvP (spec index 5): If the bot has the Acclimation talent
+        else if (bot->HasAura(50152))
+            tab = 5;
+        // Unholy PvP (spec index 6): If the bot has the Magic Suppression talent
+        else if (bot->HasAura(49611))
+            tab = 6;
+    }
+
+    // Shaman PvP exceptions
+    if (bot->getClass() == CLASS_SHAMAN)
+    {
+        // Elemental PvP (spec index 3): If the bot has the Astral Shift talent
+        if (bot->HasAura(51479))
+            tab = 3;
+        // Enhancement PvP (spec index 4): If the bot has the Earthen Power talent
+        else if (bot->HasAura(51524))
+            tab = 4;
+        // Restoration PvP (spec index 5): If the bot has the Focused Mind talent
+        else if (bot->HasAura(30866))
+            tab = 5;
+    }
+
+    // Mage PvE/PvP exceptions
+    if (bot->getClass() == CLASS_MAGE)
+    {
+        // Frostfire PvE (spec index 3): If the bot has both the Burnout talent and the Ice Shards talent
+        if (bot->HasAura(44472) && bot->HasAura(15047))
+            tab = 3;
+        // Arcane PvP (spec index 4): If the bot has the Improved Blink talent
+        else if (bot->HasAura(31570))
+            tab = 4;
+        // Fire PvP (spec index 5): If the bot has the Fiery Payback talent
+        else if (bot->HasAura(64357))
+            tab = 5;
+        // Frost PvP (spec index 6): If the bot has the Shattered Barrier talent
+        else if (bot->HasAura(54787))
+            tab = 6;
+    }
+
+    // Warlock PvP exceptions
+    if (bot->getClass() == CLASS_WARLOCK)
+    {
+        // Affliction PvP (spec index 3): If the bot has the Improved Howl of Terror talent
+        if (bot->HasAura(30057))
+            tab = 3;
+        // Demonology PvP (spec index 4): If the bot has both the Nemesis talent and the Intensity talent
+        else if (bot->HasAura(63123) && bot->HasAura(18136))
+            tab = 4;
+        // Destruction PvP (spec index 5): If the bot has the Nether Protection talent
+        else if (bot->HasAura(30302))
+            tab = 5;
+    }
+
+    // Druid PvE/PvP exceptions
+    if (bot->getClass() == CLASS_DRUID)
+    {
+        // Cat PvE (spec index 3): If the bot is Feral spec, level 20 or higher, and does NOT have the Thick Hide talent
+        if (tab == DRUID_TAB_FERAL && bot->GetLevel() >= 20 && !bot->HasAura(16931))
+            tab = 3;
+        // Balance PvP (spec index 4): If the bot has the Owlkin Frenzy talent
+        else if (bot->HasAura(48393))
+            tab = 4;
+        // Feral PvP (spec index 5): If the bot has the Primal Tenacity talent
+        else if (bot->HasAura(33957))
+            tab = 5;
+        // Resto PvP (spec index 6): If the bot has the Improved Barkskin talent
+        else if (bot->HasAura(63411))
+            tab = 6;
+    }
+
     std::list<uint32> glyphs;
     ItemTemplateContainer const* itemTemplates = sObjectMgr->GetItemTemplateStore();
     for (ItemTemplateContainer::const_iterator i = itemTemplates->begin(); i != itemTemplates->end(); ++i)

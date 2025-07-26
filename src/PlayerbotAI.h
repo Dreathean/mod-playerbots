@@ -544,6 +544,8 @@ public:
     bool IsSafe(Player* player);
     bool IsSafe(WorldObject* obj);
     ChatChannelSource GetChatChannelSource(Player* bot, uint32 type, std::string channelName);
+    
+    bool CheckLocationDistanceByLevel(Player* player, const WorldLocation &loc, bool fromStartUp = false);
 
     bool HasCheat(BotCheatMask mask)
     {
@@ -589,6 +591,9 @@ public:
     NewRpgInfo rpgInfo;
     NewRpgStatistic rpgStatistic;
     std::unordered_set<uint32> lowPriorityQuest;
+
+    // Schedules a callback to run once after <delayMs> milliseconds.
+    void AddTimedEvent(std::function<void()> callback, uint32 delayMs);
 
 private:
     static void _fillGearScoreData(Player* player, Item* item, std::vector<uint32>* gearScore, uint32& twoHandScore,

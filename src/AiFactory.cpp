@@ -80,13 +80,13 @@ uint8 AiFactory::GetPlayerSpecTab(Player* bot)
         switch (bot->getClass())
         {
             case CLASS_MAGE:
-                tab = 1;
+                tab = MAGE_TAB_FROST;
                 break;
             case CLASS_PALADIN:
-                tab = 2;
+                tab = PALADIN_TAB_RETRIBUTION;
                 break;
             case CLASS_PRIEST:
-                tab = 1;
+                tab = PRIEST_TAB_HOLY;
                 break;
         }
 
@@ -367,12 +367,14 @@ void AiFactory::AddDefaultCombatStrategies(Player* player, PlayerbotAI* const fa
             }
             break;
         case CLASS_HUNTER:
-            engine->addStrategiesNoInit("dps", "aoe", "bdps", "dps assist", nullptr);
-            engine->addStrategy("dps debuff", false);
-            // if (tab == HUNTER_TAB_SURVIVAL)
-            // {
-            //     engine->addStrategy("trap weave", false);
-            // }
+            if (tab == 0)  // Beast Mastery
+                engine->addStrategiesNoInit("bm", nullptr);
+            else if (tab == 1)  // Marksmanship
+                engine->addStrategiesNoInit("mm", nullptr);
+            else if (tab == 2)  // Survival
+                engine->addStrategiesNoInit("surv", nullptr);
+
+            engine->addStrategiesNoInit("cc", "dps assist", "aoe", nullptr);
             break;
         case CLASS_ROGUE:
             if (tab == ROGUE_TAB_ASSASSINATION || tab == ROGUE_TAB_SUBTLETY)
@@ -385,8 +387,16 @@ void AiFactory::AddDefaultCombatStrategies(Player* player, PlayerbotAI* const fa
             }
             break;
         case CLASS_WARLOCK:
-            engine->addStrategiesNoInit("dps assist", "dps", "dps debuff", "aoe", nullptr);
+            if (tab == 0)  // Affliction
+                engine->addStrategiesNoInit("affli", "curse of agony", nullptr);
+            else if (tab == 1)  // Demonology
+                engine->addStrategiesNoInit("demo", "curse of agony", "meta melee", nullptr);
+            else if (tab == 2)  // Destruction
+                engine->addStrategiesNoInit("destro", "curse of elements", nullptr);
+
+            engine->addStrategiesNoInit("cc", "dps assist", "aoe", nullptr);
             break;
+
         case CLASS_DEATH_KNIGHT:
             if (tab == 0)
                 engine->addStrategiesNoInit("blood", "tank assist", nullptr);
@@ -531,7 +541,7 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
                 nonCombatEngine->addStrategiesNoInit("bthreat", "tank assist", "barmor", nullptr);
                 if (player->GetLevel() >= 20)
                 {
-                    nonCombatEngine->addStrategy("bstats", false);
+                    nonCombatEngine->addStrategy("bhealth", false);
                 }
                 else
                 {
@@ -588,17 +598,17 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
         case CLASS_WARLOCK:
             if (tab == WARLOCK_TAB_AFFLICATION)
             {
-                nonCombatEngine->addStrategiesNoInit("bmana", nullptr);
+                nonCombatEngine->addStrategiesNoInit("felhunter", "spellstone", nullptr);
             }
             else if (tab == WARLOCK_TAB_DEMONOLOGY)
             {
-                nonCombatEngine->addStrategiesNoInit("bdps", nullptr);
+                nonCombatEngine->addStrategiesNoInit("felguard", "spellstone", nullptr);
             }
             else if (tab == WARLOCK_TAB_DESTRUCTION)
             {
-                nonCombatEngine->addStrategiesNoInit("bhealth", nullptr);
+                nonCombatEngine->addStrategiesNoInit("imp", "firestone", nullptr);
             }
-            nonCombatEngine->addStrategiesNoInit("dps assist", nullptr);
+            nonCombatEngine->addStrategiesNoInit("dps assist", "ss self", nullptr);
             break;
         case CLASS_DEATH_KNIGHT:
             if (tab == 0)

@@ -11,6 +11,7 @@
 #include "SharedDefines.h"
 #include "Trigger.h"
 #include "Vehicle.h"
+#include <MovementActions.h>
 
 const std::vector<uint32> availableVehicles = {NPC_VEHICLE_CHOPPER, NPC_SALVAGED_DEMOLISHER,
                                                NPC_SALVAGED_DEMOLISHER_TURRET, NPC_SALVAGED_SIEGE_ENGINE,
@@ -277,6 +278,21 @@ bool IronAssemblyOverloadTrigger::IsActive()
            boss->HasAura(SPELL_OVERLOAD_10_MAN_2) || boss->HasAura(SPELL_OVERLOAD_25_MAN_2);
 }
 
+bool IronAssemblyRuneOfPowerTrigger::IsActive()
+{
+    Unit* target = botAI->GetUnit(bot->GetTarget());
+    if (!target || !target->IsAlive())
+        return false;
+
+    if (!target->HasAura(SPELL_RUNE_OF_POWER))
+        return false;
+
+    if (target->GetVictim() != bot)
+        return false;
+
+    return botAI->IsTank(bot);
+}
+
 bool KologarnMarkDpsTargetTrigger::IsActive()
 {
     // Check boss and it is alive
@@ -470,6 +486,17 @@ bool KologarnCrunchArmorTrigger::IsActive()
         return false;
 
     return bot->HasAura(SPELL_CRUNCH_ARMOR);
+}
+
+bool AuriayaFallFromFloorTrigger::IsActive()
+{
+    // Check boss and it is alive
+    Unit* boss = AI_VALUE2(Unit*, "find target", "auriaya");
+    if (!boss || !boss->IsAlive())
+        return false;
+
+    // Check if bot is on the floor
+    return bot->GetPositionZ() < ULDUAR_AURIAYA_AXIS_Z_PATHING_ISSUE_DETECT;
 }
 
 bool HodirBitingColdTrigger::IsActive()
@@ -711,4 +738,822 @@ bool FreyaMoveToHealingSporeTrigger::IsActive()
 
     // If the nearest spore is farther than 6 yards, a move is required
     return nearestDistance > 6.0f;
+}
+
+bool ThorimUnbalancingStrikeTrigger::IsActive()
+{
+    Unit* boss = AI_VALUE2(Unit*, "find target", "thorim");
+
+    // Check boss and it is alive
+    if (!boss || !boss->IsAlive())
+        return false;
+
+    return bot->HasAura(SPELL_UNBALANCING_STRIKE);
+}
+
+bool ThorimMarkDpsTargetTrigger::IsActive()
+{
+    if (bot->GetDistance(ULDUAR_THORIM_NEAR_ARENA_CENTER) > 110.0f)
+        return false;
+
+    Group* group = bot->GetGroup();
+    if (!group)
+        return false;
+
+    if (botAI->IsMainTank(bot))
+    {
+        ObjectGuid currentSkullTarget = group->GetTargetIcon(skullIndex);
+        Unit* currentSkullUnit = botAI->GetUnit(currentSkullTarget);
+        if (currentSkullUnit && !currentSkullUnit->IsAlive())
+        {
+            currentSkullUnit = nullptr;
+        }
+
+        Unit* acolyte = AI_VALUE2(Unit*, "find target", "dark rune acolyte");
+        Unit* evoker = AI_VALUE2(Unit*, "find target", "dark rune evoker");
+
+        if (acolyte && acolyte->IsAlive() && bot->GetDistance(acolyte) < 50.0f &&
+            (!currentSkullUnit || currentSkullUnit->GetEntry() != acolyte->GetEntry()))
+            return true;
+
+        if (evoker && evoker->IsAlive() && bot->GetDistance(evoker) < 50.0f &&
+            (!currentSkullUnit || currentSkullUnit->GetEntry() != evoker->GetEntry()))
+            return true;
+
+        Unit* boss = AI_VALUE2(Unit*, "find target", "thorim");
+
+        // Check boss and it is alive
+        if (!boss || !boss->IsAlive())
+            return false;
+
+
+        if (boss->GetPositionZ() < ULDUAR_THORIM_AXIS_Z_FLOOR_THRESHOLD && (!currentSkullUnit || !currentSkullUnit->IsAlive()))
+        {
+            group->SetTargetIcon(skullIndex, bot->GetGUID(), boss->GetGUID());
+            return true;
+        }
+
+        return false;
+    }
+    else if (botAI->IsAssistTankOfIndex(bot, 0))
+    {
+        Player* mainTank = nullptr;
+        for (GroupReference* gref = group->GetFirstMember(); gref; gref = gref->next())
+        {
+            Player* member = gref->GetSource();
+            if (member && botAI->IsMainTank(member))
+            {
+                mainTank = member;
+                break;
+            }
+        }
+
+        if (mainTank && bot->GetDistance(mainTank) < 30.0f)
+            return false;
+
+        ObjectGuid currentCrossTarget = group->GetTargetIcon(crossIndex);
+        Unit* currentCrossUnit = botAI->GetUnit(currentCrossTarget);
+        if (currentCrossUnit && !currentCrossUnit->IsAlive())
+        {
+            currentCrossUnit = nullptr;
+        }
+
+        Unit* acolyte = AI_VALUE2(Unit*, "find target", "dark rune acolyte");
+        if (currentCrossUnit && currentCrossUnit->GetEntry() == NPC_DARK_RUNE_ACOLYTE_I)
+            return false;
+
+        Unit* runicColossus = AI_VALUE2(Unit*, "find target", "runic colossus");
+        Unit* ancientRuneGiant = AI_VALUE2(Unit*, "find target", "ancient rune giant");
+        Unit* ironHonorGuard = AI_VALUE2(Unit*, "find target", "iron ring guard");
+        Unit* ironRingGuard = AI_VALUE2(Unit*, "find target", "iron honor guard");
+
+        if (acolyte && acolyte->IsAlive() && (!currentCrossUnit || currentCrossUnit->GetEntry() != acolyte->GetEntry()))
+            return true;
+
+        if (currentCrossUnit && currentCrossUnit->GetEntry() == NPC_RUNIC_COLOSSUS)
+            return false;
+        if (runicColossus && runicColossus->IsAlive() &&
+            (!currentCrossUnit || currentCrossUnit->GetEntry() != runicColossus->GetEntry()))
+            return true;
+
+        if (currentCrossUnit && currentCrossUnit->GetEntry() == NPC_ANCIENT_RUNE_GIANT)
+            return false;
+        if (ancientRuneGiant && ancientRuneGiant->IsAlive() &&
+            (!currentCrossUnit || currentCrossUnit->GetEntry() != ancientRuneGiant->GetEntry()))
+            return true;
+
+        return false;
+    }
+
+    return false;
+}
+
+bool ThorimGauntletPositioningTrigger::IsActive()
+{
+    if (bot->GetDistance(ULDUAR_THORIM_NEAR_ARENA_CENTER) > 110.0f)
+        return false;
+
+    Difficulty raidDifficulty = bot->GetRaidDifficulty();
+
+    Group* group = bot->GetGroup();
+    if (!group)
+        return false;
+    uint32 requiredAssistTankQuantity = 1;
+    uint32 requiredHealerQuantity = 0;
+    uint32 requiredDpsQuantity = 0;
+
+    if (raidDifficulty == Difficulty::RAID_DIFFICULTY_10MAN_NORMAL)
+    {
+        requiredDpsQuantity = 3;
+        requiredHealerQuantity = 1;
+    }
+    else if (raidDifficulty == Difficulty::RAID_DIFFICULTY_25MAN_NORMAL)
+    {
+        requiredDpsQuantity = 7;
+        requiredHealerQuantity = 2;
+    }
+
+    for (GroupReference* gref = group->GetFirstMember(); gref; gref = gref->next())
+    {
+        Player* member = gref->GetSource();
+        if (!member)
+            continue;
+
+        if (requiredDpsQuantity > 0 && botAI->IsDps(member))
+        {
+            requiredDpsQuantity--;
+            if (bot->GetGUID() == member->GetGUID())
+                break;
+        }
+
+        if (requiredAssistTankQuantity > 0 && botAI->IsAssistTankOfIndex(member, 0))
+        {
+            requiredAssistTankQuantity--;
+            if (bot->GetGUID() == member->GetGUID())
+                break;
+        }
+
+        if (requiredHealerQuantity > 0 && botAI->IsHeal(member))
+        {
+            requiredHealerQuantity--;
+            if (bot->GetGUID() == member->GetGUID())
+                break;
+        }
+
+        if (requiredDpsQuantity == 0 && requiredAssistTankQuantity == 0 && requiredHealerQuantity == 0)
+            return false;
+    }
+
+    Unit* master = botAI->GetMaster();
+    if (master->GetDistance(ULDUAR_THORIM_NEAR_ENTRANCE_POSITION) < 10.0f && (bot->GetDistance2d(master) > 5.0f))
+    {
+        return true;
+    }
+
+    if ((master->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_6_YARDS_1) < 6.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_6_YARDS_2) < 6.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_5_YARDS_1) < 5.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_10_YARDS_1) < 10.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_10_YARDS_2) < 10.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_10_YARDS_3) < 10.0f) &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_6_YARDS_1) > 6.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_6_YARDS_2) > 6.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_5_YARDS_1) > 5.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_10_YARDS_1) > 10.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_10_YARDS_2) > 10.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_LEFT_SIDE_10_YARDS_3) > 10.0f)
+    {
+        if (bot->GetPositionZ() > ULDUAR_THORIM_AXIS_Z_FLOOR_THRESHOLD)
+            return false;
+
+        return true;
+    }
+
+    if ((master->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_6_YARDS_1) < 6.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_6_YARDS_2) < 6.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_5_YARDS_1) < 5.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_10_YARDS_1) < 10.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_10_YARDS_2) < 10.0f ||
+         master->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_10_YARDS_3) < 10.0f) &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_6_YARDS_1) > 6.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_6_YARDS_2) > 6.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_5_YARDS_1) > 5.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_10_YARDS_1) > 10.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_10_YARDS_2) > 10.0f &&
+        bot->GetDistance(ULDUAR_THORIM_GAUNTLET_RIGHT_SIDE_10_YARDS_3) > 10.0f)
+    {
+        if (bot->GetPositionZ() > ULDUAR_THORIM_AXIS_Z_FLOOR_THRESHOLD)
+            return false;
+
+        return true;
+    }
+
+    Unit* boss = AI_VALUE2(Unit*, "find target", "thorim");
+    if (boss && boss->IsAlive() && bot->GetPositionZ() > ULDUAR_THORIM_AXIS_Z_FLOOR_THRESHOLD &&
+        boss->GetPositionZ() < ULDUAR_THORIM_AXIS_Z_FLOOR_THRESHOLD)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool ThorimArenaPositioningTrigger::IsActive()
+{
+    Unit* boss = AI_VALUE2(Unit*, "find target", "thorim");
+
+    // Check boss and it is alive
+    if (!boss || !boss->IsAlive())
+        return false;
+
+    if (boss->GetPositionZ() < ULDUAR_THORIM_AXIS_Z_FLOOR_THRESHOLD)
+        return false;
+
+    Difficulty raidDifficulty = bot->GetRaidDifficulty();
+
+    Group* group = bot->GetGroup();
+    if (!group)
+        return false;
+    uint32 requiredAssistTankQuantity = 1;
+    uint32 requiredHealerQuantity = 0;
+    uint32 requiredDpsQuantity = 0;
+
+    if (raidDifficulty == Difficulty::RAID_DIFFICULTY_10MAN_NORMAL)
+    {
+        requiredDpsQuantity = 3;
+        requiredHealerQuantity = 1;
+    }
+    else if (raidDifficulty == Difficulty::RAID_DIFFICULTY_25MAN_NORMAL)
+    {
+        requiredDpsQuantity = 7;
+        requiredHealerQuantity = 2;
+    }
+
+    for (GroupReference* gref = group->GetFirstMember(); gref; gref = gref->next())
+    {
+        Player* member = gref->GetSource();
+        if (!member)
+            continue;
+
+        if (requiredDpsQuantity > 0 && botAI->IsDps(member))
+        {
+            requiredDpsQuantity--;
+            if (bot->GetGUID() == member->GetGUID())
+                return false;
+        }
+
+        if (requiredAssistTankQuantity > 0 && botAI->IsAssistTankOfIndex(member, 0))
+        {
+            requiredAssistTankQuantity--;
+            if (bot->GetGUID() == member->GetGUID())
+                return false;
+        }
+
+        if (requiredHealerQuantity > 0 && botAI->IsHeal(member))
+        {
+            requiredHealerQuantity--;
+            if (bot->GetGUID() == member->GetGUID())
+                return false;
+        }
+
+        if (requiredDpsQuantity == 0 && requiredAssistTankQuantity == 0 && requiredHealerQuantity == 0)
+            break;
+    }
+
+    GuidVector targets = AI_VALUE(GuidVector, "possible targets");
+    Unit* target = nullptr;
+    for (auto i = targets.begin(); i != targets.end(); ++i)
+    {
+        target = botAI->GetUnit(*i);
+        if (!target || !target->IsAlive())
+            continue;
+
+        uint32 entry = target->GetEntry();
+
+        if (entry == NPC_DARK_RUNE_ACOLYTE_I || entry == NPC_CAPTURED_MERCENARY_SOLDIER_ALLY ||
+            entry == NPC_CAPTURED_MERCENARY_SOLDIER_HORDE || entry == NPC_CAPTURED_MERCENARY_CAPTAIN_ALLY ||
+            entry == NPC_CAPTURED_MERCENARY_CAPTAIN_HORDE || entry == NPC_JORMUNGAR_BEHEMOT ||
+            entry == NPC_DARK_RUNE_WARBRINGER || entry == NPC_DARK_RUNE_EVOKER || entry == NPC_DARK_RUNE_CHAMPION ||
+            entry == NPC_DARK_RUNE_COMMONER)
+            return false;
+    }
+
+    if (bot && bot->GetDistance(ULDUAR_THORIM_NEAR_ARENA_CENTER) > 5.0f)
+        return true;
+
+    return false;
+}
+
+bool ThorimFallFromFloorTrigger::IsActive()
+{
+    if (bot->GetDistance(ULDUAR_THORIM_NEAR_ARENA_CENTER) > 110.0f)
+        return false;
+
+    // Check if bot is on the floor
+    return bot->GetPositionZ() < ULDUAR_THORIM_AXIS_Z_PATHING_ISSUE_DETECT;
+}
+
+bool ThorimPhase2PositioningTrigger::IsActive()
+{
+    if (!botAI->IsRanged(bot) && !botAI->IsMainTank(bot))
+        return false;
+
+    Unit* boss = AI_VALUE2(Unit*, "find target", "thorim");
+
+    // Check boss and it is alive
+    if (!boss || !boss->IsAlive())
+        return false;
+
+    if (boss->GetPositionZ() > ULDUAR_THORIM_AXIS_Z_FLOOR_THRESHOLD)
+        return false;
+
+    if (botAI->IsMainTank(bot))
+    {
+        if (bot->GetDistance(ULDUAR_THORIM_PHASE2_TANK_SPOT) > 1.0f && boss->GetVictim() == bot)
+            return true;
+
+        return false;
+    }
+
+    Group* group = bot->GetGroup();
+    if (!group)
+        return false;
+
+    uint32 memberPositionNumber = 0;
+    for (GroupReference* gref = group->GetFirstMember(); gref; gref = gref->next())
+    {
+        Player* member = gref->GetSource();
+        if (!member)
+            continue;
+
+        if (botAI->IsRanged(member))
+        {
+            if (bot->GetGUID() == member->GetGUID())
+                break;
+
+            memberPositionNumber++;
+
+            if (memberPositionNumber == 3)
+                memberPositionNumber = 0;
+        }
+    }
+
+    if (memberPositionNumber == 0 && bot->GetDistance(ULDUAR_THORIM_PHASE2_RANGE1_SPOT) > 1.0f)
+        return true;
+
+    if (memberPositionNumber == 1 && bot->GetDistance(ULDUAR_THORIM_PHASE2_RANGE2_SPOT) > 1.0f)
+        return true;
+
+    if (memberPositionNumber == 2 && bot->GetDistance(ULDUAR_THORIM_PHASE2_RANGE3_SPOT) > 1.0f)
+        return true;
+
+    return false;
+}
+
+bool MimironShockBlastTrigger::IsActive()
+{
+    Unit* boss = AI_VALUE2(Unit*, "find target", "leviathan mk ii");
+
+    // Check boss and it is alive
+    if (!boss || !boss->IsAlive())
+    {
+        return false;
+    }
+
+    if (!boss->HasUnitState(UNIT_STATE_CASTING) || !boss->FindCurrentSpellBySpellId(SPELL_SHOCK_BLAST))
+    {
+        return false;
+    }
+
+    if (botAI->IsMelee(bot))
+    {
+        return true;
+    }
+    else
+    {
+        return bot->GetDistance2d(boss) < 15.0f;
+    }
+}
+
+bool MimironPhase1PositioningTrigger::IsActive()
+{
+    if (!botAI->IsRanged(bot))
+    {
+        return false;
+    }
+
+    Unit* leviathanMkII = nullptr;
+    Unit* vx001 = nullptr;
+    Unit* aerialCommandUnit = nullptr;
+
+    GuidVector targets = AI_VALUE(GuidVector, "possible targets");
+    Unit* target = nullptr;
+    for (auto i = targets.begin(); i != targets.end(); ++i)
+    {
+        target = botAI->GetUnit(*i);
+        if (!target || !target->IsAlive())
+            continue;
+
+        if (target->GetEntry() == NPC_LEVIATHAN_MKII)
+        {
+            leviathanMkII = target;
+        }
+        else if (target->GetEntry() == NPC_VX001)
+        {
+            return false;
+        }
+        else if (target->GetEntry() == NPC_AERIAL_COMMAND_UNIT)
+        {
+            return false;
+        }
+    }
+
+    if (!leviathanMkII || !leviathanMkII->IsAlive())
+    {
+        return false;
+    }
+
+    return AI_VALUE(float, "disperse distance") != 6.0f;
+}
+
+bool MimironP3Wx2LaserBarrageTrigger::IsActive()
+{
+    Unit* boss = AI_VALUE2(Unit*, "find target", "vx-001");
+
+    // Check boss and it is alive
+    if (!boss || !boss->IsAlive())
+    {
+        return false;
+    }
+
+    bool isCasting = boss->HasUnitState(UNIT_STATE_CASTING);
+    bool isP3WX2LaserBarrage = boss->FindCurrentSpellBySpellId(SPELL_SPINNING_UP) ||
+        boss->FindCurrentSpellBySpellId(SPELL_P3WX2_LASER_BARRAGE_1) ||
+        boss->FindCurrentSpellBySpellId(SPELL_P3WX2_LASER_BARRAGE_2) ||
+        boss->FindCurrentSpellBySpellId(SPELL_P3WX2_LASER_BARRAGE_AURA_1) ||
+        boss->FindCurrentSpellBySpellId(SPELL_P3WX2_LASER_BARRAGE_AURA_2) ||
+        boss->FindCurrentSpellBySpellId(SPELL_P3WX2_LASER_BARRAGE_3);
+    bool hasP3WX2LaserBarrageAura =
+        boss->HasAura(SPELL_P3WX2_LASER_BARRAGE_AURA_1) || boss->HasAura(SPELL_P3WX2_LASER_BARRAGE_AURA_2);
+
+    if ((!isCasting && !hasP3WX2LaserBarrageAura) || !isP3WX2LaserBarrage)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool MimironRapidBurstTrigger::IsActive()
+{
+    Unit* leviathanMkII = nullptr;
+    Unit* vx001 = nullptr;
+    Unit* aerialCommandUnit = nullptr;
+
+    GuidVector targets = AI_VALUE(GuidVector, "possible targets");
+    Unit* target = nullptr;
+    for (auto i = targets.begin(); i != targets.end(); ++i)
+    {
+        target = botAI->GetUnit(*i);
+        if (!target || !target->IsAlive())
+            continue;
+
+        if (target->GetEntry() == NPC_LEVIATHAN_MKII)
+        {
+            leviathanMkII = target;
+        }
+        else if (target->GetEntry() == NPC_VX001)
+        {
+            vx001 = target;
+        }
+        else if (target->GetEntry() == NPC_AERIAL_COMMAND_UNIT)
+        {
+            aerialCommandUnit = target;
+        }
+    }
+
+    if (!vx001 || !vx001->IsAlive())
+    {
+        return false;
+    }
+
+    if (leviathanMkII && leviathanMkII->HasUnitState(UNIT_STATE_CASTING) &&
+        leviathanMkII->FindCurrentSpellBySpellId(SPELL_SHOCK_BLAST))
+    {
+        return false;
+    }
+
+    if (botAI->IsMainTank(bot) && leviathanMkII && leviathanMkII->IsAlive() && leviathanMkII->GetVictim() != bot)
+    {
+        return false;
+    }
+
+    if (botAI->IsMelee(bot) && !botAI->IsMainTank(bot) && leviathanMkII && aerialCommandUnit)
+    {
+        return false;
+    }
+
+    MimironP3Wx2LaserBarrageTrigger mimironP3Wx2LaserBarrageTrigger(botAI);
+    if (mimironP3Wx2LaserBarrageTrigger.IsActive())
+    {
+        return false;
+    }
+
+    Group* group = bot->GetGroup();
+    if (!group)
+    {
+        return false;
+    }
+
+    uint32 memberSpotNumber = 0;
+    Position memberPosition;
+    for (GroupReference* gref = group->GetFirstMember(); gref; gref = gref->next())
+    {
+        Player* member = gref->GetSource();
+        if (!member)
+            continue;
+
+        if (bot->GetGUID() == member->GetGUID())
+        {
+            if (botAI->IsRanged(bot))
+            {
+                switch (memberSpotNumber)
+                {
+                    case 0:
+                        memberPosition = ULDUAR_MIMIRON_PHASE2_SIDE1RANGE_SPOT;
+                        break;
+                    case 1:
+                        memberPosition = ULDUAR_MIMIRON_PHASE2_SIDE2RANGE_SPOT;
+                        break;
+                    case 2:
+                        memberPosition = ULDUAR_MIMIRON_PHASE2_SIDE3RANGE_SPOT;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                if (botAI->IsMainTank(bot) && leviathanMkII)
+                {
+                    memberPosition = ULDUAR_MIMIRON_PHASE4_TANK_SPOT;
+                }
+                else
+                {
+                    switch (memberSpotNumber)
+                    {
+                        case 0:
+                            memberPosition = ULDUAR_MIMIRON_PHASE2_SIDE1MELEE_SPOT;
+                            break;
+                        case 1:
+                            memberPosition = ULDUAR_MIMIRON_PHASE2_SIDE2MELEE_SPOT;
+                            break;
+                        case 2:
+                            memberPosition = ULDUAR_MIMIRON_PHASE2_SIDE3MELEE_SPOT;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            break;
+        }
+
+        memberSpotNumber++;
+
+        if (memberSpotNumber == 3)
+        {
+            memberSpotNumber = 0;
+        }
+    }
+
+    GuidVector npcs = AI_VALUE(GuidVector, "nearest npcs");
+    float nearestRocketStrikeDistance = std::numeric_limits<float>::max();
+    bool rocketStrikeDetected = false;
+
+    for (const ObjectGuid& guid : npcs)
+    {
+        Unit* unit = botAI->GetUnit(guid);
+        if (!unit)
+            continue;
+
+        if (unit->GetEntry() == NPC_ROCKET_STRIKE_N)
+        {
+            rocketStrikeDetected = true;
+            float distance = bot->GetDistance2d(memberPosition.GetPositionX(), memberPosition.GetPositionY());
+            if (distance < nearestRocketStrikeDistance)
+            {
+                nearestRocketStrikeDistance = distance;
+            }
+        }
+    }
+
+    return (bot->GetDistance(memberPosition) > 7.0f && !rocketStrikeDetected) ||
+           bot->GetDistance(memberPosition) > 20.0f;
+}
+
+bool MimironAerialCommandUnitTrigger::IsActive()
+{
+    Unit* leviathanMkII = nullptr;
+    Unit* vx001 = nullptr;
+    Unit* aerialCommandUnit = nullptr;
+    //Unit* bombBot = nullptr;
+    Unit* assaultBot = nullptr;
+
+    GuidVector targets = AI_VALUE(GuidVector, "possible targets");
+    Unit* target = nullptr;
+    for (auto i = targets.begin(); i != targets.end(); ++i)
+    {
+        target = botAI->GetUnit(*i);
+        if (!target || !target->IsAlive())
+            continue;
+
+        if (target->GetEntry() == NPC_LEVIATHAN_MKII)
+        {
+            leviathanMkII = target;
+        }
+        else if (target->GetEntry() == NPC_VX001)
+        {
+            vx001 = target;
+        }
+        else if (target->GetEntry() == NPC_AERIAL_COMMAND_UNIT)
+        {
+            aerialCommandUnit = target;
+        }
+        //else if (target->GetEntry() == NPC_BOMB_BOT)
+        //{
+        //    bombBot = target;
+        //}
+        else if (target->GetEntry() == NPC_ASSAULT_BOT)
+        {
+            assaultBot = target;
+        }
+    }
+
+    if (!aerialCommandUnit || !aerialCommandUnit->IsAlive() || leviathanMkII || vx001)
+    {
+        return false;
+    }
+
+    if (!botAI->IsRanged(bot) && !botAI->IsMainTank(bot) && !botAI->IsAssistTankOfIndex(bot, 0))
+    {
+        return false;
+    }
+
+    if (botAI->IsMainTank(bot) || botAI->IsAssistTankOfIndex(bot, 0))
+    {
+        Group* group = bot->GetGroup();
+        if (!group)
+        {
+            return false;
+        }
+
+        ObjectGuid skullTarget = group->GetTargetIcon(skullIndex);
+        ObjectGuid crossTarget = group->GetTargetIcon(crossIndex);
+
+        //if (bombBot && bombBot->GetGUID() != crossTarget)
+        //{
+        //    return true;
+        //}
+        if (!crossTarget || aerialCommandUnit->GetGUID() != crossTarget)
+        {
+            return true;
+        }
+        else if (assaultBot && (!skullTarget || assaultBot->GetGUID() != skullTarget))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    std::string rtiMark = AI_VALUE(std::string, "rti");
+    if (rtiMark != "cross")
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool MimironRocketStrikeTrigger::IsActive()
+{
+    Unit* boss = AI_VALUE2(Unit*, "find target", "vx-001");
+
+    // Check boss and it is alive
+    if (!boss || !boss->IsAlive())
+    {
+        return false;
+    }
+
+    Creature* rocketStrikeN = bot->FindNearestCreature(NPC_ROCKET_STRIKE_N, 100.0f);
+
+    if (!rocketStrikeN)
+    {
+        return false;
+    }
+
+    return bot->GetDistance2d(rocketStrikeN->GetPositionX(), rocketStrikeN->GetPositionY()) <= 10.0f;
+}
+
+bool MimironPhase4MarkDpsTrigger::IsActive()
+{
+    Unit* leviathanMkII = nullptr;
+    Unit* vx001 = nullptr;
+    Unit* aerialCommandUnit = nullptr;
+
+    Group* group = bot->GetGroup();
+    if (!group)
+    {
+        return false;
+    }
+
+    GuidVector targets = AI_VALUE(GuidVector, "possible targets");
+    Unit* target = nullptr;
+    for (auto i = targets.begin(); i != targets.end(); ++i)
+    {
+        target = botAI->GetUnit(*i);
+        if (!target || !target->IsAlive())
+            continue;
+
+        if (target->GetEntry() == NPC_LEVIATHAN_MKII)
+        {
+            leviathanMkII = target;
+        }
+        else if (target->GetEntry() == NPC_VX001)
+        {
+            vx001 = target;
+        }
+        else if (target->GetEntry() == NPC_AERIAL_COMMAND_UNIT)
+        {
+            aerialCommandUnit = target;
+        }
+    }
+
+    if (!leviathanMkII || !vx001 || !aerialCommandUnit)
+    {
+        return false;
+    }
+
+    if (botAI->IsMainTank(bot))
+    {
+        Unit* highestHealthUnit = nullptr;
+        uint32 highestHealth = 0;
+
+        if (leviathanMkII && leviathanMkII->GetHealth() > highestHealth)
+        {
+            highestHealth = leviathanMkII->GetHealth();
+            highestHealthUnit = leviathanMkII;
+        }
+        if (vx001 && vx001->GetHealth() > highestHealth)
+        {
+            highestHealth = vx001->GetHealth();
+            highestHealthUnit = vx001;
+        }
+        if (aerialCommandUnit && aerialCommandUnit->GetHealth() > highestHealth)
+        {
+            highestHealthUnit = aerialCommandUnit;
+        }
+
+        ObjectGuid skullTarget = group->GetTargetIcon(skullIndex);
+        if (!skullTarget)
+        {
+            return true;
+        }
+
+        return highestHealthUnit->GetGUID() != skullTarget;
+    }
+    else
+    {
+        return AI_VALUE(std::string, "rti") != "skull";
+    }
+
+    return false;
+}
+
+bool MimironCheatTrigger::IsActive()
+{
+    if (!botAI->IsMainTank(bot)) 
+    {
+        return false;
+    }
+
+    GuidVector targets = AI_VALUE(GuidVector, "nearest npcs");
+    for (const ObjectGuid& guid : targets)
+    {
+        Unit* unit = botAI->GetUnit(guid);
+        if (!unit || !unit->IsAlive())
+            continue;
+
+        if (unit->GetEntry() == NPC_PROXIMITY_MINE)
+        {
+            return true;
+        }
+        else if (unit->GetEntry() == NPC_BOMB_BOT)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }

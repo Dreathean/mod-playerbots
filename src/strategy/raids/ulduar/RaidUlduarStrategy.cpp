@@ -68,6 +68,10 @@ void RaidUlduarStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
         "iron assembly overload trigger",
         NextAction::array(0, new NextAction("iron assembly overload action", ACTION_RAID), nullptr)));
 
+    triggers.push_back(new TriggerNode(
+        "iron assembly rune of power trigger",
+        NextAction::array(0, new NextAction("iron assembly rune of power action", ACTION_RAID), nullptr)));
+
     //
     // Kologarn
     //
@@ -102,6 +106,13 @@ void RaidUlduarStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
     triggers.push_back(new TriggerNode(
         "kologarn crunch armor trigger",
         NextAction::array(0, new NextAction("kologarn crunch armor action", ACTION_RAID), nullptr)));
+
+    //
+    // Auriaya
+    //
+    triggers.push_back(new TriggerNode(
+        "auriaya fall from floor trigger",
+        NextAction::array(0, new NextAction("auriaya fall from floor action", ACTION_RAID), nullptr)));
 
     //
     // Hodir
@@ -148,12 +159,72 @@ void RaidUlduarStrategy::InitTriggers(std::vector<TriggerNode*>& triggers)
         "thorim nature resistance trigger",
         NextAction::array(0, new NextAction("thorim nature resistance action", ACTION_RAID), nullptr)));
 
+    triggers.push_back(new TriggerNode(
+        "thorim frost resistance trigger",
+        NextAction::array(0, new NextAction("thorim frost resistance action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "thorim unbalancing strike trigger",
+        NextAction::array(0, new NextAction("thorim unbalancing strike action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "thorim mark dps target trigger",
+        NextAction::array(0, new NextAction("thorim mark dps target action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "thorim gauntlet positioning trigger",
+        NextAction::array(0, new NextAction("thorim gauntlet positioning action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "thorim arena positioning trigger",
+        NextAction::array(0, new NextAction("thorim arena positioning action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "thorim fall from floor trigger",
+        NextAction::array(0, new NextAction("thorim fall from floor action", ACTION_RAID + 1), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "thorim phase 2 positioning trigger",
+        NextAction::array(0, new NextAction("thorim phase 2 positioning action", ACTION_RAID), nullptr)));
+
     //
     // Mimiron
     //
     triggers.push_back(new TriggerNode(
+        "mimiron p3wx2 laser barrage trigger",
+        NextAction::array(0, new NextAction("mimiron p3wx2 laser barrage action", ACTION_RAID + 2), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "mimiron shock blast trigger",
+        NextAction::array(0, new NextAction("mimiron shock blast action", ACTION_RAID + 1), nullptr)));
+
+    triggers.push_back(new TriggerNode(
         "mimiron fire resistance trigger",
         NextAction::array(0, new NextAction("mimiron fire resistance action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "mimiron phase 1 positioning trigger",
+        NextAction::array(0, new NextAction("mimiron phase 1 positioning action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "mimiron rapid burst trigger",
+        NextAction::array(0, new NextAction("mimiron rapid burst action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "mimiron aerial command unit trigger",
+        NextAction::array(0, new NextAction("mimiron aerial command unit action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "mimiron rocket strike trigger",
+        NextAction::array(0, new NextAction("mimiron rocket strike action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "mimiron phase 4 mark dps trigger",
+        NextAction::array(0, new NextAction("mimiron phase 4 mark dps action", ACTION_RAID), nullptr)));
+
+    triggers.push_back(new TriggerNode(
+        "mimiron cheat trigger",
+        NextAction::array(0, new NextAction("mimiron cheat action", ACTION_RAID), nullptr)));
 }
 
 void RaidUlduarStrategy::InitMultipliers(std::vector<Multiplier*>& multipliers)

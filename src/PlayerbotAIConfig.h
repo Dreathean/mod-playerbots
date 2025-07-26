@@ -7,6 +7,7 @@
 #define _PLAYERBOT_PLAYERbotAICONFIG_H
 
 #include <mutex>
+#include <unordered_map>
 
 #include "Common.h"
 #include "DBCEnums.h"
@@ -34,6 +35,26 @@ enum class HealingManaEfficiency : uint8
     SUPERIOR = 32
 };
 
+enum NewRpgStatus : int
+{
+    RPG_STATUS_START = 0,
+    // Going to far away place
+    RPG_GO_GRIND = 0,
+    RPG_GO_CAMP = 1,
+    // Exploring nearby
+    RPG_WANDER_RANDOM = 2,
+    RPG_WANDER_NPC = 3,
+    // Do Quest (based on quest status)
+    RPG_DO_QUEST = 4,
+    // Travel
+    RPG_TRAVEL_FLIGHT = 5,
+    // Taking a break
+    RPG_REST = 6,
+    // Initial status
+    RPG_IDLE = 7,
+    RPG_STATUS_END = 8
+};
+
 #define MAX_SPECNO 20
 #define MAX_WORLDBUFF_SPECNO 3
 
@@ -55,6 +76,8 @@ public:
     bool IsInPvpProhibitedArea(uint32 id);
 
     bool enabled;
+    bool disabledWithoutRealPlayer;
+    bool EnableICCBuffs;
     bool allowAccountBots, allowGuildBots, allowTrustedAccountBots;
     bool randomBotGuildNearby, randomBotInvitePlayer, inviteChat;
     uint32 globalCoolDown, reactDelay, maxWaitForMove, disableMoveSplinePath, maxMovementSearchTime, expireActionTime,
@@ -71,6 +94,7 @@ public:
     float maxAoeAvoidRadius;
     std::set<uint32> aoeAvoidSpellWhitelist;
     bool tellWhenAvoidAoe;
+    std::set<uint32> disallowedGameObjects;
 
     uint32 openGoSpell;
     bool randomBotAutologin;
@@ -84,6 +108,7 @@ public:
     std::vector<uint32> randomBotQuestIds;
     uint32 randomBotTeleportDistance;
     float randomGearLoweringChance;
+    bool incrementalGearInit;
     int32 randomGearQualityLimit;
     int32 randomGearScoreLimit;
     float randomBotMinLevelChance, randomBotMaxLevelChance;
@@ -99,6 +124,7 @@ public:
     uint32 minRandomBotPvpTime, maxRandomBotPvpTime;
     uint32 randomBotsPerInterval;
     uint32 minRandomBotsPriceChangeInterval, maxRandomBotsPriceChangeInterval;
+    uint32 disabledWithoutRealPlayerLoginDelay, disabledWithoutRealPlayerLogoutDelay;
     bool randomBotJoinLfg;
 
     // chat
@@ -195,6 +221,7 @@ public:
 
     bool randomBotLoginAtStartup;
     uint32 randomBotTeleLowerLevel, randomBotTeleHigherLevel;
+    std::map<uint32, std::pair<uint32, uint32>> zoneBrackets;
     bool logInGroupOnly, logValuesPerTick;
     bool fleeingEnabled;
     bool summonAtInnkeepersEnabled;
@@ -250,6 +277,7 @@ public:
     uint32 iterationsPerTick;
 
     std::mutex m_logMtx;
+    std::vector<std::string> tradeActionExcludedPrefixes;
     std::vector<std::string> allowedLogFiles;
     std::unordered_map<std::string, std::pair<FILE*, bool>> logFiles;
 
@@ -275,7 +303,7 @@ public:
     bool randomBotShowCloak;
     bool randomBotFixedLevel;
     bool disableRandomLevels;
-    float playerbotsXPrate;
+    float randomBotXPRate;
     uint32 randomBotAllianceRatio;
     uint32 randomBotHordeRatio;
     bool disableDeathKnightLogin;
@@ -308,6 +336,7 @@ public:
     bool autoLearnTrainerSpells;
     bool autoDoQuests;
     bool enableNewRpgStrategy;
+    std::unordered_map<NewRpgStatus, uint32> RpgStatusProbWeight;
     bool syncLevelWithPlayers;
     bool freeFood;
     bool autoLearnQuestSpells;
@@ -330,6 +359,8 @@ public:
     bool equipmentPersistence;
     int32 equipmentPersistenceLevel;
     int32 groupInvitationPermission;
+    bool keepAltsInGroup = false;
+    bool KeepAltsInGroup() const { return keepAltsInGroup; }
     bool allowSummonInCombat;
     bool allowSummonWhenMasterIsDead;
     bool allowSummonWhenBotIsDead;
@@ -347,6 +378,12 @@ public:
     uint32 useFastGroundMountAtMinLevel;
     uint32 useFlyMountAtMinLevel;
     uint32 useFastFlyMountAtMinLevel;
+
+    // stagger flightpath takeoff
+    uint32 delayMin;
+    uint32 delayMax;
+    uint32 gapMs;
+    uint32 gapJitterMs;
 
     std::string const GetTimestampStr();
     bool hasLog(std::string const fileName)

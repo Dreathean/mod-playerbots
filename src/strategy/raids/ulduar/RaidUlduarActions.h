@@ -130,6 +130,14 @@ public:
     bool isUseful() override;
 };
 
+class IronAssemblyRuneOfPowerAction : public MovementAction
+{
+public:
+    IronAssemblyRuneOfPowerAction(PlayerbotAI* botAI) : MovementAction(botAI, "iron assembly rune of power action") {}
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
 class KologarnMarkDpsTargetAction : public Action
 {
 public:
@@ -177,6 +185,14 @@ public:
     bool isUseful() override;
 };
 
+class AuriayaFallFromFloorAction : public Action
+{
+public:
+    AuriayaFallFromFloorAction(PlayerbotAI* botAI) : Action(botAI, "auriaya fall from floor action") {}
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
 class HodirBitingColdJumpAction : public MovementAction
 {
 public:
@@ -208,5 +224,134 @@ public:
     bool Execute(Event event) override;
     bool isUseful() override;
 };
+
+class ThorimUnbalancingStrikeAction : public Action
+{
+public:
+    ThorimUnbalancingStrikeAction(PlayerbotAI* ai) : Action(ai, "thorim unbalancing strike action") {}
+
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class ThorimMarkDpsTargetAction : public Action
+{
+public:
+    ThorimMarkDpsTargetAction(PlayerbotAI* ai) : Action(ai, "thorim mark dps target action") {}
+
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class ThorimArenaPositioningAction : public MovementAction
+{
+public:
+    ThorimArenaPositioningAction(PlayerbotAI* ai) : MovementAction(ai, "thorim arena positioning action") {}
+
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class ThorimGauntletPositioningAction : public MovementAction
+{
+public:
+    ThorimGauntletPositioningAction(PlayerbotAI* ai) : MovementAction(ai, "thorim gauntlet positioning action") {}
+
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class ThorimFallFromFloorAction : public Action
+{
+public:
+    ThorimFallFromFloorAction(PlayerbotAI* botAI) : Action(botAI, "thorim fall from floor action") {}
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class ThorimPhase2PositioningAction : public MovementAction
+{
+public:
+    ThorimPhase2PositioningAction(PlayerbotAI* ai) : MovementAction(ai, "thorim phase 2 positioning action") {}
+
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class MimironShockBlastAction : public MovementAction
+{
+public:
+    MimironShockBlastAction(PlayerbotAI* ai) : MovementAction(ai, "mimiron shock blast action") {}
+
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class MimironPhase1PositioningAction : public MovementAction
+{
+public:
+    MimironPhase1PositioningAction(PlayerbotAI* ai) : MovementAction(ai, "mimiron phase 1 positioning action") {}
+
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class MimironP3Wx2LaserBarrageAction : public MovementAction
+{
+public:
+    MimironP3Wx2LaserBarrageAction(PlayerbotAI* ai, float distance = 24.0f, float delta_angle = M_PI / 8)
+        : MovementAction(ai, "mimiron p3wx2 laser barrage action")
+    {
+        this->distance = distance;
+        this->delta_angle = delta_angle;
+    }
+    virtual bool Execute(Event event);
+
+protected:
+    float distance, delta_angle;
+};
+
+class MimironRapidBurstAction : public MovementAction
+{
+public:
+    MimironRapidBurstAction(PlayerbotAI* ai) : MovementAction(ai, "mimiron rapid burst action") {}
+
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class MimironAerialCommandUnitAction : public Action
+{
+public:
+    MimironAerialCommandUnitAction(PlayerbotAI* ai) : Action(ai, "mimiron aerial command unit action") {}
+
+    bool Execute(Event event) override;
+};
+
+class MimironRocketStrikeAction : public MovementAction
+{
+public:
+    MimironRocketStrikeAction(PlayerbotAI* ai) : MovementAction(ai, "mimiron rocket strike action") {}
+
+    bool Execute(Event event) override;
+    bool isUseful() override;
+};
+
+class MimironPhase4MarkDpsAction : public Action
+{
+public:
+    MimironPhase4MarkDpsAction(PlayerbotAI* ai) : Action(ai, "mimiron phase 4 mark dps action") {}
+
+    bool Execute(Event event) override;
+};
+
+class MimironCheatAction : public Action
+{
+public:
+    MimironCheatAction(PlayerbotAI* ai) : Action(ai, "mimiron cheat action") {}
+
+    bool Execute(Event event) override;
+};
+
 
 #endif
