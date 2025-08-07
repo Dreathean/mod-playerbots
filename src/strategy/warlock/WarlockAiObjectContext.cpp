@@ -171,6 +171,8 @@ public:
         creators["curse of exhaustion"] = &WarlockTriggerFactoryInternal::curse_of_exhaustion;
         creators["curse of tongues"] = &WarlockTriggerFactoryInternal::curse_of_tongues;
         creators["curse of weakness"] = &WarlockTriggerFactoryInternal::curse_of_weakness;
+        creators["wrong pet"] = &WarlockTriggerFactoryInternal::wrong_pet;
+        creators["rain of fire channel check"] = &WarlockTriggerFactoryInternal::rain_of_fire_channel_check;
     }
 
 private:
@@ -197,10 +199,7 @@ private:
     static Trigger* immolate(PlayerbotAI* botAI) { return new ImmolateTrigger(botAI); }
     static Trigger* immolate_on_attacker(PlayerbotAI* ai) { return new ImmolateOnAttackerTrigger(ai); }
     static Trigger* unstable_affliction(PlayerbotAI* ai) { return new UnstableAfflictionTrigger(ai); }
-    static Trigger* unstable_affliction_on_attacker(PlayerbotAI* ai)
-    {
-        return new UnstableAfflictionOnAttackerTrigger(ai);
-    }
+    static Trigger* unstable_affliction_on_attacker(PlayerbotAI* ai) { return new UnstableAfflictionOnAttackerTrigger(ai); }
     static Trigger* haunt(PlayerbotAI* ai) { return new HauntTrigger(ai); }
     static Trigger* decimation(PlayerbotAI* ai) { return new DecimationTrigger(ai); }
     static Trigger* life_tap(PlayerbotAI* ai) { return new LifeTapTrigger(ai); }
@@ -218,6 +217,8 @@ private:
     static Trigger* curse_of_exhaustion(PlayerbotAI* ai) { return new CurseOfExhaustionTrigger(ai); }
     static Trigger* curse_of_tongues(PlayerbotAI* ai) { return new CurseOfTonguesTrigger(ai); }
     static Trigger* curse_of_weakness(PlayerbotAI* ai) { return new CurseOfWeaknessTrigger(ai); }
+    static Trigger* wrong_pet(PlayerbotAI* ai) { return new WrongPetTrigger(ai); }
+    static Trigger* rain_of_fire_channel_check(PlayerbotAI* ai) { return new RainOfFireChannelCheckTrigger(ai); }
 };
 
 class WarlockAiObjectContextInternal : public NamedObjectContext<Action>
